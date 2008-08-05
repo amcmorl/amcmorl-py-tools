@@ -1,0 +1,4 @@
+# ignore bytecode files
+*.pyc
+# ignore backups
+*~

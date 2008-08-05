@@ -1,0 +1,56 @@
+point vertex_2_4_5 -0.160010480503 1.43830683044 -0.0222536543198
+point vertex_3_4_5 -0.552085261818 0.292534890729 -1.67134005782
+point vertex_1_2_4 0.99863901605 1.03246545286 0.17765991223
+point vertex_1_3_6 1.09095756771 -0.930626021705 -0.196430957577
+point vertex_1_2_7 0.552094624873 -0.292486659179 1.67133688824
+point vertex_0_5_7 -1.43832842633 -0.0928018923693 0.132061339102
+point vertex_0_3_6 -0.0294472230828 -1.33792625049 -0.551281531336
+point vertex_1_6_7 0.552097540929 -0.292548669977 1.6713250718
+point vertex_0_3_5 -0.55211184161 0.292503054534 -1.67133684963
+point vertex_1_3_4 1.24888232277 0.193176326269 -0.70556140864
+point vertex_0_6_7 -0.809183294631 -1.13284498259 0.395869272916
+point vertex_2_5_7 -0.901509481904 0.830250537555 0.76993702784
+face face_0 vertex_0_3_5
+face face_0 vertex_0_3_6
+face face_0 vertex_0_6_7
+face face_0 vertex_0_5_7
+normal face_0 -0.70261639724 -0.541979794998 -0.461072770984
+face face_1 vertex_1_3_6
+face face_1 vertex_1_3_4
+face face_1 vertex_1_2_4
+face face_1 vertex_1_2_7
+face face_1 vertex_1_6_7
+normal face_1 0.960033641914 -0.00816508347244 0.27976550503
+face face_2 vertex_1_2_7
+face face_2 vertex_1_2_4
+face face_2 vertex_2_4_5
+face face_2 vertex_2_5_7
+normal face_2 0.135187463495 0.720819561211 0.67981137817
+face face_3 vertex_1_3_4
+face face_3 vertex_1_3_6
+face face_3 vertex_0_3_6
+face face_3 vertex_0_3_5
+face face_3 vertex_3_4_5
+normal face_3 0.409841135774 -0.42358093936 -0.807842454466
+face face_4 vertex_3_4_5
+face face_4 vertex_2_4_5
+face face_4 vertex_1_2_4
+face face_4 vertex_1_3_4
+normal face_4 0.35579982705 0.72573399339 -0.58882650578
+face face_5 vertex_0_5_7
+face face_5 vertex_2_5_7
+face face_5 vertex_2_4_5
+face face_5 vertex_3_4_5
+face face_5 vertex_0_3_5
+normal face_5 -0.756663680114 0.607338303043 -0.242074907525
+face face_6 vertex_1_6_7
+face face_6 vertex_0_6_7
+face face_6 vertex_0_3_6
+face face_6 vertex_1_3_6
+normal face_6 0.21162755581 -0.904572937896 0.370083203683
+face face_7 vertex_2_5_7
+face face_7 vertex_0_5_7
+face face_7 vertex_0_6_7
+face face_7 vertex_1_6_7
+face face_7 vertex_1_2_7
+normal face_7 -0.613209546684 -0.17559310192 0.770156551886

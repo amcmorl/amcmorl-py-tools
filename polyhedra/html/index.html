@@ -1,0 +1,402 @@
+<html>
+<head>
+<title>Constructing Polyhedra from Repelling Points on a Sphere</title>
+</head>
+<link rel="stylesheet" type="text/css" href="../sitestyle.css" name="Simon Tatham's Home Page Style">
+<body>
+<h1 align=center>Constructing Polyhedra from Repelling Points on a Sphere</h1>
+
+<p>
+<i>by <a href="../">Simon Tatham</a>, mathematician and programmer</i>
+</p>
+
+<h2>Introduction</h2>
+
+<p>
+Some time around 1993, I went for a university interview. In the
+waiting room, I met another guy who was waiting for an interview,
+and we got talking. He said that at school he had recently been
+doing a project on buckminsterfullerene, the strange polyhedral form
+of carbon in which sixty carbon atoms combine into the shape of a
+truncated icosahedron. In particular, his chemistry teacher had been
+speculating about why this curious shape should form, and had
+conjectured that if you took 60 points on the surface of a sphere,
+caused them to mutually repel (while still constrained to the
+sphere's surface) and let them move to an equilibrium state, they
+might naturally form into the vertices of the buckminsterfullerene
+shape.
+
+<p>
+This struck me as a fun idea to play with, so when I went home I
+cooked up some simulation software and gave it a try. Unfortunately,
+although I was perfectly competent to write the code for the
+repelling points, I didn't do so well at writing code to visualise
+the result helpfully. I was left with a vague feeling that I didn't
+get the buckminsterfullerene shape, but I couldn't have usefully
+described what I did get.
+
+<p>
+More recently I was asked by a friend to see if I could produce a
+solid with seven faces, for use as a stage prop representing a
+seven-sided die. It occurred to me that an interesting way to
+construct a reasonably symmetric seven-faced solid might be to do
+the same trick again: constrain seven mutually repelling points to
+the surface of a sphere and let them find equilibrium, but instead
+of using them as the vertices of a polyhedron, draw a tangent plane
+to the sphere at each point and see what polyhedron those planes
+enclosed.
+
+<p>
+It's now been ten years since I originally experimented in this
+area, and now I'm much better at maths, so this time I've managed to
+do a proper job, and create software which can sensibly draw the
+actual polyhedra obtained by these techniques. So here are some
+interesting results and some pretty pictures on the web for
+everybody else to enjoy.
+
+<h2>Construction</h2>
+
+<p>
+My 1993 attempt at this problem used an extremely simple technique
+to display the results. I simply projected my sphere on to a circle
+on the screen, and displayed the points in two distinct forms
+according to whether they were on the front or the back side. So for
+60 points, it would have looked something like this:
+
+<p align=center>
+<a href="points60.png"><img src="points60.png"
+alt="[307x308 greyscale PNG, 11KB]" width=307 height=308 border=0></a>
+
+<p>
+From this diagram you can observe that the points are arranged in
+something like a triangular lattice, and deduce that therefore the
+solid depicted is probably <em>not</em> the buckminsterfullerene
+structure which is composed of pentagons and hexagons. But it's not
+easy, in general, to figure out what sort of polyhedron is
+represented by one of these diagrams; how about this one, with 13
+points?
+
+<p align=center>
+<a href="points13.png"><img src="points13.png"
+alt="[306x306 greyscale PNG, 7KB]" width=306 height=306 border=0></a>
+
+<p>
+I know <em>I</em> couldn't stare at that set of points and work out
+what sort of polyhedron it would end up looking like. So I wrote
+some software to do the job for me. For those who are interested,
+I'll now describe the techniques I used; for everyone else, if you
+skip on to the next section there will be more pretty pictures :-)
+
+<ul>
+<li>
+<em>The face construction</em>: in this case we are given a set of n
+points, and we must construct a polyhedron with n faces, with each
+face being the tangent plane to the sphere at one of the given
+points.
+
+<p>
+To do this I began by drawing each face plane separately. I rotated
+the whole point set until one point was at the very top of the
+sphere, and then I computed the intersection lines of every other
+tangent plane with the horizontal one at the top. Then I simply
+generated PostScript which drew that set of intersecting lines on a
+page, so that the human viewer could easily pick out the central
+polygon in the middle of the mess. It typically looked something
+like this:
+
+<p align=center>
+<a href="facediagram.png"><img src="facediagram.png"
+alt="[400x400 greyscale PNG, 20KB]" width=400 height=400 border=0></a>
+</li>
+
+<p>
+This represents one face of the 13-sided polyhedron generated from
+the above set of 13 points. Each face is numbered; the diagram shows
+the number of the face at the centre, and each intersection line is
+labelled with the number of the other plane involved. At the centre
+of the diagram is the actual desired polygon. In principle a full
+set of these diagrams should have been adequate to construct the
+desired polyhedron: simply print them all out, cut out the central
+polygon from each sheet, and glue them to each other in the manner
+indicated by the numeric labels shown around each face.
+
+<p>
+However, this seemed like far too much work; much better to simply
+generate a 3D model of the polyhedron and display it on the screen.
+In order to pick out the face boundary among all those crisscrossing
+lines, I notionally expanded a circle out from the centre point of
+the face until it touched a line. Then I knew that point on that
+line was part of the face boundary; so I then moved along that line
+until I encountered a crossing point with another line, then turned
+left on to <em>that</em> line and did the same thing again, and so
+on until I returned to where I'd started. This allowed me to end up
+with a clear definition of each polygonal face, and then I simply
+reversed the rotation which had brought one point to the top in
+order to put that face back in its proper place. Repeat for every
+point, and we have a model:
+
+<p align=center>
+<a href="faces13.png"><img src="faces13.png"
+alt="[271x277 greyscale PNG, 11KB]" width=271 height=277 border=0></a>
+
+</li>
+<li>
+<em>The vertex construction</em>: in this case we are given a set of
+n points, and we want to find a convex polyhedron with those points
+as vertices. In other words, what we actually want is the <em>convex
+hull</em> of those points: the smallest convex shape containing them.
+
+<p>
+Finding convex hulls is a common topic in algorithms textbooks, and
+I'm sure there are highly efficient algorithms to do it very quickly
+and efficiently; but I knew the precise format of the output I
+wanted, I didn't know whether any existing algorithms would be
+easily adapted to produce that output even once I'd researched them,
+and in any case I thought it would be fun to figure it out for
+myself. So what I did was: for each <em>pair</em> of vertices, I
+rotated the sphere so that that pair was aligned along a vertical
+line, then I projected the whole point set into the horizontal plane
+so that my two points were mapped on to a single one. Then I sorted
+all the other points into order of angle from the fulcrum point, so
+that they were in the order you'd see them if you stood at the
+fulcrum and turned around slowly. Finally I examined that list of
+angles to see if there was a gap of size pi or greater; if so, that
+implied that a line could be drawn through my fulcrum point in such
+a way that all the other points were on the same side of it. In
+other words, this told me whether my fulcrum point was on the convex
+hull of the projected point set, which (returning to three
+dimensions) would be true if and only if the line between the two
+original points was part of the 3D convex hull.
+
+<p>
+This gave me the precise set of <em>edges</em> of the polyhedron I
+wanted. Now all I needed was to assemble those edges into faces. So
+you take an edge, you walk along it to a vertex, you look at all the
+other edges leaving that vertex, and you pick the one that allows
+you to turn left by the sharpest amount. Repeat until you get back
+to where you started, and you've circumnavigated a face. So once
+again we have now generated a 3D polyhedron model, in precisely the
+same form as the last one:
+
+<p align=center>
+<a href="vertices13.png"><img src="vertices13.png"
+alt="[261x254 greyscale PNG, 13KB]" width=261 height=254 border=0></a>
+
+</ul>
+
+<h2>Results</h2>
+
+<p>
+So, having written all this code, I then applied it to various
+numbers of points and produced some actual results.
+
+<p>
+Some obvious results you might expect to see would be the five
+Platonic solids. Some of these do in fact work the way you'd expect;
+applying the vertex construction to 4, 6 and 12 points does create a
+tetrahedron, an octahedron and an icosahedron:
+
+<p align=center>
+<a href="vertices4.png"><img src="vertices4.png"
+alt="[232x202 greyscale PNG, 5KB]" width=232 height=202 border=0></a>
+<a href="vertices6.png"><img src="vertices6.png"
+alt="[228x253 greyscale PNG, 8KB]" width=228 height=253 border=0></a>
+<a href="vertices12.png"><img src="vertices12.png"
+alt="[264x277 greyscale PNG, 13KB]" width=264 height=277 border=0></a>
+
+<p>
+And, of course, applying the face construction instead generates
+their duals. The tetrahedron's dual is another tetrahedron (not very
+interesting), but the other two generate a cube and a dodecahedron:
+
+<p align=center>
+<a href="faces4.png"><img src="faces4.png"
+alt="[211x215 greyscale PNG, 5KB]" width=211 height=215 border=0></a>
+<a href="faces6.png"><img src="faces6.png"
+alt="[248x252 greyscale PNG, 7KB]" width=248 height=252 border=0></a>
+<a href="faces12.png"><img src="faces12.png"
+alt="[272x264 greyscale PNG, 10KB]" width=272 height=264 border=0></a>
+
+<p>
+Where it gets interesting is that although doing the face
+construction on six points produces a cube, doing the vertex
+construction on eight <em>doesn't</em>. Instead we get a more
+interesting solid:
+
+<p align=center>
+<a href="vertices8.png"><img src="vertices8.png"
+alt="[245x236 greyscale PNG, 8KB]" width=245 height=236 border=0></a>
+
+<p>
+What's happened here is that instead of the points arranging
+themselves at the corners of a cube, they have "discovered" that by
+twisting one end of the cube 45 degrees relative to the other one,
+they can end up slightly further apart. So instead of a cube, we end
+up with a square <em>antiprism</em>: a square at each end, four
+triangles connecting edges of the top square to corners of the
+bottom one, and four more triangles connecting edges of the bottom
+square to corners of the top one.
+
+<p>
+This phenomenon illustrates what seems to be a general principle of
+the vertex construction: faces bigger than a triangle appear not to
+be stable. A square face, for example, will buckle into two
+triangles wherever it can; pentagons and hexagons are unheard of.
+(The two square faces at the ends of the solid shown above are
+actually the <em>only</em> case, in all of the examples I tried, in
+which a non-triangular face appears at all.)
+
+<p>
+So this is why the vertex construction cheerfully produced a
+tetrahedron, an octahedron and an icosahedron: they're the three
+platonic solids which are made of nice stable triangles. The cube
+doesn't work because it's made of squares, and so we would expect
+the dodecahedron not to work either. And, indeed, when we apply the
+vertex construction to 20 points, we get this:
+
+<p align=center>
+<a href="vertices20.png"><img src="vertices20.png"
+alt="[280x285 greyscale PNG, 17KB]" width=280 height=285 border=0></a>
+
+<p>
+Far from a nice clean dodecahedron with twelve large flat pentagonal
+faces, we instead see a complete mess: an irregular solid composed
+of 36 triangles. And in fact this continues to be the case for
+larger and larger numbers of points. In particular, applying the
+vertex construction to 60 points gives a solid which is nothing at
+all like the truncated icosahedron structure of buckminsterfullerene:
+
+<p align=center>
+<a href="vertices60.png"><img src="vertices60.png"
+alt="[281x282 greyscale PNG, 26KB]" width=281 height=282 border=0></a>
+
+<p>
+With its structure composed of rigid triangles, in fact, it seems to
+me that this solid is actually rather <em>more</em> reminiscent of
+Buckminster Fuller's geodesic dome structures than the molecule
+named after him is!
+
+<p>
+But that's enough of vertices. These vast expanses of triangles get
+quite boring after a while; you get some much more
+attractive-looking solids from the <em>face</em> construction, using
+each of the source points as the centre of a polyhedron face.
+
+<p>
+One of the initial motivations for this work was to find a
+reasonably symmetric seven-sided polyhedron. So given all this, it
+was the work of a moment to construct a point set of size 7, apply
+the face construction, and produce ...
+
+<p align=center>
+<a href="faces7.png"><img src="faces7.png"
+alt="[260x276 greyscale PNG, 7KB]" width=260 height=276 border=0></a>
+
+<p>
+... a total disappointment! There are apparently no
+<em>interesting</em> solids with seven faces; instead all we get is
+a terribly boring pentagonal prism.
+
+<p>
+Some slightly larger numbers give some more interesting results.
+Here are the solids with 9, 10 and 11 faces:
+
+<p align=center>
+<a href="faces9.png"><img src="faces9.png"
+alt="[269x259 greyscale PNG, 8KB]" width=269 height=259 border=0></a>
+<a href="faces10.png"><img src="faces10.png"
+alt="[264x281 greyscale PNG, 9KB]" width=264 height=281 border=0></a>
+<a href="faces11.png"><img src="faces11.png"
+alt="[228x246 greyscale PNG, 9KB]" width=228 height=246 border=0></a>
+
+<p>
+The 9-face solid is quite pretty in particular, I think. It's most
+easily visualised by imagining two tetrahedra glued together by one
+face, then squashed down into a fairly flat dipyramid. Then this
+dipyramid has been truncated at each of the three sharpest corners
+to produce a solid with six pentagons and three rhombi.
+
+<p>
+Finally, one last curiosity. I have shown above that sixty points on
+a sphere do not naturally converge into the vertices of the
+buckminsterfullerene truncated icosahedron. However, if we apply the
+<em>face</em> construction to 32 points, we get this:
+
+<p align=center>
+<a href="faces32.png"><img src="faces32.png"
+alt="[284x285 greyscale PNG, 17KB]" width=284 height=285 border=0></a>
+
+<p>
+This <em>is</em> the truncated icosahedron! Or something very close
+to it, anyway. The hexagons on this solid are not quite regular;
+this is because of the constraint that all the faces of a solid
+created in this way have to be tangent to the same inscribed sphere.
+This is not true of the regular truncated icosahedron, in which the
+perpendicular distance from a face to the centre is different for
+the pentagonal and hexagonal faces. So although this solid is
+totally unstable in terms of vertices and nothing even close to it
+is generated by the vertex construction, it does turn out to be a
+natural choice for the face construction.
+
+<h2>Downloads</h2>
+
+<p>
+Here you can download the source code for all the software I used to
+generate these pictures, and also a program which generates nets for
+constructing of all the above polyhedra out of cardboard.
+
+<p>
+My own code is written in basic core
+<a href="http://www.python.org/">Python</a>,
+so it should run
+equally happily on Linux or Unix, Windows, or any other operating
+system which can run Python. (I've only tested it on Linux.) I did
+all the linear algebra myself the old-fashioned way without using
+any Python extensions, so these programs should run happily on any
+Python installation at all.
+
+<p>
+In addition to Python, you might need some other software to make
+sense of the results:
+
+<ul>
+<li>
+All graphical output is done in PostScript, so you will need some
+means of interpreting PostScript files. If you have a PostScript
+laser printer, that should be adequate. If not,
+<a href="http://ghostscript.com/">Ghostscript</a>
+is a software PostScript implementation which can output to most
+printers, many bitmap image file formats, and even PDF.
+<li>
+If you want to reproduce my example files in the same way I did, I
+provide Makefiles designed to work with
+<a href="http://www.gnu.org/software/make/make.html">GNU make</a>.
+<li>
+The archive also contains this web page and its supporting images.
+If you want to regenerate the exact images yourself, the Makefile
+which produces them requires Ghostscript (see above), the
+<code>pnmcrop</code> program from the
+<a href="http://netpbm.sourceforge.net/">Netpbm</a>
+package, and the <code>convert</code> program from the
+<a href="http://www.imagemagick.org/">ImageMagick</a>
+package.
+</ul>
+
+<p>
+Here is the archive itself, in Unix <code>.tar.gz</code> format:
+<a href="polyhedra.tar.gz">polyhedra.tar.gz</a>
+
+<p>
+For details of how to use the various programs in the archive, see
+the file called README.
+
+<hr>
+(comments to <a href="mailto:&#97;&#110;&#97;&#107;&#105;&#110;&#64;&#112;&#111;&#98;&#111;&#120;&#46;&#99;&#111;&#109;">&#97;&#110;&#97;&#107;&#105;&#110;&#64;&#112;&#111;&#98;&#111;&#120;&#46;&#99;&#111;&#109;</a>)
+<br>
+(thanks to
+<a href="http://www.chiark.greenend.org.uk/">chiark</a>
+for hosting this page)
+<br>
+(last modified on <!--LASTMOD-->[insert date here]<!--END-->)
+</body>
+</html>

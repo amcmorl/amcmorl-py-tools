@@ -1,0 +1,38 @@
+point vertex_2_3_4 0.0815015670668 0.234238719841 -1.71420235584
+point vertex_2_4_5 1.29661770995 1.0860077116 -0.373322601346
+point vertex_0_1_3 -1.29661665239 -1.08601152524 0.373315180339
+point vertex_0_2_5 -0.279541779814 1.52200517666 0.7780466796
+point vertex_1_4_5 1.49465686516 -0.670232371273 0.562840495909
+point vertex_0_1_5 -0.0814984890673 -0.234231011944 1.71420355541
+point vertex_0_2_3 -1.49465688526 0.670232380403 -0.562840431657
+point vertex_1_3_4 0.279537664359 -1.52200908005 -0.77804052242
+face face_0 vertex_0_1_5
+face face_0 vertex_0_2_5
+face face_0 vertex_0_2_3
+face face_0 vertex_0_1_3
+normal face_0 -0.78807919675 0.217996813325 0.575680961149
+face face_1 vertex_0_1_3
+face face_1 vertex_1_3_4
+face face_1 vertex_1_4_5
+face face_1 vertex_0_1_5
+normal face_1 0.0990195736756 -0.878120048075 0.468081515547
+face face_2 vertex_2_4_5
+face face_2 vertex_2_3_4
+face face_2 vertex_0_2_3
+face face_2 vertex_0_2_5
+normal face_2 -0.0990201204102 0.878121946158 -0.468077839072
+face face_3 vertex_1_3_4
+face face_3 vertex_0_1_3
+face face_3 vertex_0_2_3
+face face_3 vertex_2_3_4
+normal face_3 -0.607557558096 -0.425886383625 -0.670443585877
+face face_4 vertex_2_3_4
+face face_4 vertex_2_4_5
+face face_4 vertex_1_4_5
+face face_4 vertex_1_3_4
+normal face_4 0.788077706535 -0.218000696631 -0.575681530649
+face face_5 vertex_0_2_5
+face face_5 vertex_0_1_5
+face face_5 vertex_1_4_5
+face face_5 vertex_2_4_5
+normal face_5 0.607559595045 0.425888368848 0.670440478901

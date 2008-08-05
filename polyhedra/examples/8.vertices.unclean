@@ -1,0 +1,56 @@
+point vertex_0 -0.70261639724 -0.541979794998 -0.461072770984
+point vertex_1 0.960033641914 -0.00816508347244 0.27976550503
+point vertex_2 0.135187463495 0.720819561211 0.67981137817
+point vertex_3 0.409841135774 -0.42358093936 -0.807842454466
+point vertex_4 0.35579982705 0.72573399339 -0.58882650578
+point vertex_5 -0.756663680114 0.607338303043 -0.242074907525
+point vertex_6 0.21162755581 -0.904572937896 0.370083203683
+point vertex_7 -0.613209546684 -0.17559310192 0.770156551886
+face face_2_1_4 vertex_2
+face face_2_1_4 vertex_1
+face face_2_1_4 vertex_4
+normal face_2_1_4 0.689976598175 0.713347855878 0.122748240257
+face face_3_1_6 vertex_3
+face face_3_1_6 vertex_1
+face face_3_1_6 vertex_6
+normal face_3_1_6 0.75375916116 -0.64298365971 -0.135717133454
+face face_4_5_2 vertex_4
+face face_4_5_2 vertex_5
+face face_4_5_2 vertex_2
+normal face_4_5_2 -0.110554021003 0.993751178311 -0.0153754364049
+face face_3_6_0 vertex_3
+face face_3_6_0 vertex_6
+face face_3_6_0 vertex_0
+normal face_3_6_0 -0.0203455980443 -0.924396491611 -0.380889987972
+face face_3_5_4 vertex_3
+face face_3_5_4 vertex_5
+face face_3_5_4 vertex_4
+normal face_3_5_4 -0.309411543131 0.163948719917 -0.936688483016
+face face_3_4_1 vertex_3
+face face_3_4_1 vertex_4
+face face_3_4_1 vertex_1
+normal face_3_4_1 0.862871213448 0.133468372495 -0.487482781794
+face face_6_1_7 vertex_6
+face face_6_1_7 vertex_1
+face face_6_1_7 vertex_7
+normal face_6_1_7 0.309419808457 -0.163957175532 0.936684272701
+face face_7_5_0 vertex_7
+face face_7_5_0 vertex_5
+face face_7_5_0 vertex_0
+normal face_7_5_0 -0.993762320071 -0.0641181959416 0.091243126629
+face face_5_7_2 vertex_5
+face face_5_7_2 vertex_7
+face face_5_7_2 vertex_2
+normal face_5_7_2 -0.622866599922 0.573632712457 0.531961192101
+face face_7_1_2 vertex_7
+face face_7_1_2 vertex_1
+face face_7_1_2 vertex_2
+normal face_7_1_2 0.309418174171 -0.163922421946 0.93669089516
+face face_6_7_0 vertex_6
+face face_6_7_0 vertex_7
+face face_6_7_0 vertex_0
+normal face_6_7_0 -0.559078433704 -0.782701771897 0.273512780753
+face face_3_0_5 vertex_3
+face face_3_0_5 vertex_0
+face face_3_0_5 vertex_5
+normal face_3_0_5 -0.309426439552 0.163930877589 -0.936686685012

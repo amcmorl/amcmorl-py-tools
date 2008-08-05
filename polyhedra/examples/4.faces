@@ -1,0 +1,20 @@
+point vertex_0_1_2 -0.725544065574 -1.51875069009 -2.48334092511
+point vertex_0_1_3 2.21407741207 -1.42818623363 1.43462374703
+point vertex_1_2_3 0.908542743033 2.76021772784 -0.745485197065
+point vertex_0_2_3 -2.39707608952 0.186719195877 1.79420237515
+face face_0 vertex_0_1_3
+face face_0 vertex_0_2_3
+face face_0 vertex_0_1_2
+normal face_0 -0.30284799533 -0.920073162763 0.248492387987
+face face_1 vertex_0_1_2
+face face_1 vertex_1_2_3
+face face_1 vertex_0_1_3
+normal face_1 0.799026750185 -0.0622410708385 -0.598065465973
+face face_2 vertex_1_2_3
+face face_2 vertex_0_1_2
+face face_2 vertex_0_2_3
+normal face_2 -0.738027430196 0.476061794268 -0.478205688295
+face face_3 vertex_0_2_3
+face face_3 vertex_0_1_3
+face face_3 vertex_1_2_3
+normal face_3 0.24184867534 0.506252439334 0.82777876628
