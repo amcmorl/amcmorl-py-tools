@@ -47,3 +47,22 @@ def rotate_about_centre( v, c, th ):
     rotation_matrix = np.array([(np.cos(th), np.sin(th)), \
                                (-np.sin(th), np.cos(th))])
     return np.dot(rotation_matrix, v - c) + c
+
+
+def rotate_about_origin_3d( vector, normal, theta ):
+    '''rotates the vector v around the normal vector n through angle th'''
+    u, v, w = normal
+    x, y, z = vector
+    dt = u*x + v*y + w*z
+    lns = u**2 + v**2 + w**2
+    ln = np.sqrt(lns)
+    return np.array(((u * dt \
+                     + (x * (v**2 + w**2) - u * (v*y + w*z)) * np.cos(theta) \
+                     + ln * (-w*y + v*z) * np.sin(theta)) / lns,
+                    (v * dt \
+                     + (y * (u**2 + w**2) - v * (u*x + w*z)) * np.cos(theta) \
+                     + ln * (w*x - u*z) * np.sin(theta)) / lns,
+                    (w * dt \
+                     + (z * (u**2 + v**2) - w * (u*x + v*y)) * np.cos(theta) \
+                     + ln * (-v*x + u*y) * np.sin(theta)) / lns))
+    
