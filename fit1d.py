@@ -1,7 +1,5 @@
 import numpy as _n
 from scipy.optimize import leastsq
-from scipy.interpolate import splprep, splev
-
 
 # --- double_boltzman --------------------------------------
 
