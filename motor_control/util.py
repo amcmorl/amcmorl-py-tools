@@ -1,5 +1,6 @@
 import numpy as np
 import scipy, scipy.stats #, scipy.io, scipy.signal
+from multiregress import multiregress
 
 target = np.array([[-1, -1, -1], \
                    [-1, -1,  1], \
@@ -153,23 +154,67 @@ def calcLag(pd, spike_hist, hand_vel, times, mode='first'):
 
     return lag_time, lag_bin
 
-def calc_pd(rates):
+def calc_pd(rates, with_err=False, n_samp=1000):
     '''calculates preferred directions of a unit from a center out task
     
     could be a method of a "unit" class
     which references the relevant data_file items
 
-    Calculates the b_x, b_y, and b_z co-efficients described in eqn 1 of
-    Schwartz et al, 1988.
+    Calculates the vector components of the preferred direction:
+    c_x, c_y, and c_z from the
+    b_x, b_y, and b_z partial regression co-efficients described in eqn 1 of
+    Schwartz et al, 1988:
 
-    d(M) = b + b_x.m_x + b_y.m_y + b_z.m_z
+        d(M) = b + b_x.m_x + b_y.m_y + b_z.m_z,
+
+    and where
+
+        c_x = b_x / sqrt(b_x^2 + b_y^2 + b_z^2)
+        c_y = b_y / sqrt(b_x^2 + b_y^2 + b_z^2)
+        c_z = b_z / sqrt(b_x^2 + b_y^2 + b_z^2)
 
     The algorithm regresses the firing rates (spike count / duration) against
     [1, cos theta_x, cos theta_y, cos theta_z], to give [b, b_x, b_y, b_z]
+
+    Parameters
+    ----------
+    rates : array, shape (ndir,)
+        1d array of firing rates in each of the (usually eight) directions
+    with_err : bool, default False
+        whether to calculate and return std errors of pd components
+    n_samp : integer
+        when calculating error, is the number of samples from the
+        theoretical distribution of PD to calculate
+    Returns
+    -------
+    pd : array, shape (3,)
+        preferred direction, unit-length
+    err : array, shape (3, )
+        std errors of components of pds
     '''
-    n_directions = target.shape[0]
     cosInput = target / np.sqrt( ( target[0]**2 ).sum() )    
-    xin = np.hstack((np.ones((n_directions, 1)), cosInput))
-    coeffs = np.linalg.lstsq(xin, rates)[0]
-    pd = np.array(coeffs)
-    return pd
+    if not with_err:
+        n_directions = target.shape[0]
+        xin = np.hstack((np.ones((n_directions, 1)), cosInput))
+        b = np.linalg.lstsq(xin, rates)[0][1:]
+        pd = b.copy()
+        k = np.sqrt(np.sum(pd**2))
+        # normalize to unit length
+        pd /= k
+        return pd, k    
+    else:
+        b, se = multiregress(cosInput, rates) # partial regression coeffs
+        b = b[1:] # remove constant term for consideration of direction
+        # b.shape (3,)
+        # Now generate n_samp samples from normal populations
+        # (mean: b_k, sd: err_k). Will have shape (n_samp, 3).
+        rands = scipy.stats.norm.rvs(size=(n_samp,3))
+        # se.shape (3,)
+        rands *= se
+        rands += b
+        ks = np.sqrt(np.sum(rands**2, axis=1))
+        pds = rands / ks[...,np.newaxis]
+        pd = np.mean(pds, axis=0)
+        k = ks.mean()
+        sem = scipy.stats.stderr(pds, axis=0)
+        return pd, k, sem
