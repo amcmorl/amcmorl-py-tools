@@ -13,7 +13,7 @@ def multiregress(xs, y):
     Parameters
     ----------
     xs : array, shape (n, k)
-        k is number of variates, n is number of observations
+        n is number of observations, k is number of variates, 
     y : array, shape (n,)
 
     Returns
@@ -28,8 +28,9 @@ def multiregress(xs, y):
     n, k = xs.shape
     xs_c = np.concatenate((np.ones((n,1)), xs), axis=1)
     b, resid, rank, s = np.linalg.lstsq(xs_c, y)
+    # resid is the 'unexplained sum-of-squares', a scalar
     s_y = np.sqrt(resid / (n - k - 1.)) # unexplained SD
     G_mult = np.linalg.inv( np.cov( xs.T ) * (n - 1) )
     se = s_y * np.sqrt(G_mult[np.eye(k, dtype=bool)])
+    assert(se[0] == se[1])
     return b, se
-
