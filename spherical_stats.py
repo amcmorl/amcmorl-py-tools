@@ -1,12 +1,104 @@
 import numpy as np
 from enthought.mayavi import mlab
-from scipy.optimize import leastsq
+import scipy.optimize as opt
 from scipy.integrate import quad
 import vectors
+import matplotlib.pyplot as plt
+from scipy.io import read_array
+import point_primitives
+
+def convert_polar_to_cartesian(theta, phi):
+    '''Convert a point described by two angles to Cartesian co-ordinates.
+
+    Parameters
+    ----------
+    theta : scalar
+      angle of rotation to z axis
+    phi : scalar
+      angle of rotation in x-y plane, counter-clockwise from x axis
+      +ve y is defined to be next CCW from +x, as in:
+
+           +y
+           /\
+           ||
+      -x<--  -->+x
+           ||
+           \/
+           -y
+           
+    Returns
+    -------
+    vector : array, shape (3,)
+      x,y,z co-ordinates of equivalent vector
+    '''
+    sin, cos = np.sin, np.cos
+    x = sin(theta) * cos(phi)
+    y = sin(theta) * sin(phi)
+    z = cos(theta)
+    return np.array((x,y,z))
+
+def convert_cartesian_to_polar(vector):
+    '''Convert a vector into two angles
+
+    Parameters
+    ----------
+    mu : array_like, shape (3,)
+      x,y,z components of vector
+
+    Returns
+    -------
+    theta : scalar
+      angle from z axis
+    phi : scalar
+      angle in x-y plane, from counter-clockwise from x axis
+      +ve y is defined to be next CCW from +x
+    '''
+    x,y,z = vector
+    pi = np.pi
+
+    theta = np.arccos(z)
+    if theta == 0:
+        # vector points straight up, phi is irrelevant,
+        #... automatically define as 0
+        phi = 0.
+    else:
+        phi = np.arctan(y/x) # first pass
+        # now sanitize phi according to convention
+        # (anticlockwise rotation, angle +ve)
+        if (x > 0) & (y > 0):
+            assert (phi > 0) & (phi < pi/2.)
+        elif (x < 0) & (y > 0):
+            phi += pi
+            assert (phi > pi /2.) & (phi < pi)
+        elif (x < 0) & (y < 0):
+            phi += pi
+            assert (phi > pi) & (phi < 3 * pi / 2.)
+        elif (x > 0) & (y < 0):
+            phi += 2 * pi
+            assert (phi > 3 * pi / 2.) & (pi < 2 * pi)
+        elif (x > 0) and (y == 0): # +x axis
+            phi = 0.
+        elif (x == 0) and (y > 0): # +y axis
+            phi = pi / 2.
+        elif (x < 0) and (y == 0): # -x axis
+            phi = pi
+        elif (x == 0) and (y < 0): # -y axis
+            phi = 3 * pi / 2.
+    return theta, phi
 
 # -------------------------- von-Mises-Fisher dist ---------------------------
 
-def estimate_kappa(P_i, mean_dir=None):
+def calc_R(P_i):
+    '''Returns R, the resultant vector, of a collection of vectors.'''
+    S = np.sum(P_i, axis=0)   # 3.2
+    R = np.sqrt(np.sum(S**2)) # 3.3
+    return R, S
+
+def mean_dir(P_i):
+    R, S = calc_R(P_i)
+    return S/R
+
+def estimate_kappa(P_i, mu=None):
     '''Returns the maximum likelihood estimate of the spread parameter (kappa)
     of a von-Mises-Fisher distribution.
 
@@ -14,7 +106,7 @@ def estimate_kappa(P_i, mean_dir=None):
     ----------
       pts : array_like, shape (n, 3)
         n unit vectors for which to find \kappa
-      mean_dir : array_like, shape (3,)
+      mu : array_like, shape (3,)
         vector of direction cosines for known population mean
 
     Returns
@@ -46,15 +138,21 @@ def estimate_kappa(P_i, mean_dir=None):
     Numbers in the code comments refer to equation numbers in the text.'''
     
     n = P_i.shape[0]
-    S = np.sum(P_i, axis=0)    # 3.2
-    R = np.sqrt(np.sum(S**2)) # 3.3
+    R, S = calc_R(P_i)
+    #S = np.sum(P_i, axis=0)   # 3.2
+    #R = np.sqrt(np.sum(S**2)) # 3.3
+    if mu != None:
+        sample_mean = S/R
+        C = np.dot(mu, sample_mean)
+        R *= C
     k0 = 1.
-    lsq = leastsq(to_min, k0, args=(R, n))
-    if lsq[-1] == 1:
-        return lsq[0]
+    lsq = opt.fmin_powell(to_min, k0, args=(R, n), disp=0)
+    return lsq
     
 def to_min(k, R, n):
-    return 1/np.tanh(k) - 1/k - R/n
+    err = np.abs(1/np.tanh(k) - 1/k - R/n)
+    #print 'k %.8f R %.4f n %d -> %.8f' % (k, R, n, err)
+    return err
 
 def C_F(kappa):
     '''From Statistical Analysis of Spherical Data,
@@ -62,7 +160,7 @@ def C_F(kappa):
     return kappa / (2 * np.pi * (np.exp(kappa) - np.exp(-kappa)))
 
 def vmf_pdf(theta, kappa):
-    '''Returns the value of the probability density function for the
+    '''Returns the probability density function for the
     von-Mises-Fisher function, for the 3d case, at the angle theta.
 
     Equation is taken from Statistical Analysis of Spherical Data,
@@ -80,7 +178,17 @@ def vmf_pdf(theta, kappa):
 def vmf_cdf(theta, kappa):
     '''Returns the value of the cumulative density function of the
     von-Mises-Fisher function, 3d case, at angle theta.'''
-    return quad(vmf_pdf, 0, theta, args=(kappa))
+    theta = np.asarray(theta)
+    if theta.size > 1:
+        if np.rank(theta) > 1:
+            raise UserError("theta should be at most 1d.")
+        cdf_list = [quad(vmf_pdf, 0, angle, args=(kappa))[0] for angle in theta]
+        cdf = np.array(cdf_list)
+        return cdf
+    else:
+        intgr, abserr = quad(vmf_pdf, 0, theta, args=(kappa))
+        #print abserr
+        return intgr
 
 def vmf_rvs(mu, k, n_pts=1):
     '''Simulate a  Fisher distribution. From Statistical Analysis of
@@ -93,35 +201,315 @@ def vmf_rvs(mu, k, n_pts=1):
     colat = 2 * np.arcsin(np.sqrt(-np.log(R_0 * (1 - l) + l) / (2 * k)))
     longit = 2 * np.pi * R_1
 
-    pts = vectors.convert_angles_to_components(colat, longit)
-    alpha, beta = vectors.convert_components_to_angles(mu)
-    return vectors.rotate_by_angles(pts, alpha, beta)
+    pts = convert_polar_to_cartesian(colat, longit)
+    #print mean_dir(pts.T)
+    alpha, beta = convert_cartesian_to_polar(mu)
+    return vectors.rotate_by_angles(pts, alpha, beta).T
+
+#---------------------------------------------------------------------------
+# Stephens, 1962 Biometrika paper - derivation of table A.12 in Fisher, 1987
+def factorial(n):
+    assert (n >= 0)
+    if n > 12:
+        n = np.uint64(n)
+    return np.product(np.arange(1, n+1))
+
+def binomial_coef(n,k):
+    return factorial(n) / (factorial(k) * factorial(n-k))
+
+def lclip(a):
+    return a if a >= 0 else 0
+
+def P(N, R):
+    '''from Stephens, 1962b, eqn 4'''
+    ss = np.arange(0, N / 2.)
+    rs = np.empty(ss.size)
+    for i, s in enumerate(ss):
+        rs[i] = (-1)**s * binomial_coef(N,s) * (lclip(N - R - 2 * s))**(N - 1)
+    result = rs.sum()
+    assert(~np.isnan(result))
+    return rs.sum()
+
+def calculate_R0(N, Rstar, alpha): #Ro_low, Ro_high):
+    Ro_low = 0
+    Ro_high = N
+    return opt.fminbound(prob_fn, Ro_low, Ro_high,
+                         args=(N, Rstar, alpha))#, disp=0)
+    #return gradient_descent(prob_fn, start=3*Rstar/4., args=(N, Rstar, alpha))
+
+def prob_fn(Ro, N, Rstar, alpha):
+    return (P(N, Ro) / P(N, Rstar) - alpha)**2
+#----------------------------------------------------------------------------   
+
+def calc_confid_angle(P_i, alpha, mu=None):
+    '''calculates the (1 - alpha) * 100% confidence interval for the given
+    distribution of spherically distributed pts P_i
+
+    Parameters
+    ----------
+    P_i : array, shape (n,3)
+      co-ordinates of n pts (x,y,z) in distribution
+    alpha : float
+      probability of acceptable alpha error
+    mu : array_like, shape (3,)
+      mean direction of distribution, in event it is known a priori of
+      variates
+
+    Returns
+    -------
+    theta_alpha : float
+      angle from the mean vector describing confidence cone'''
+    z = 2
+
+    n = P_i.shape[0]
+    R, S = calc_R(P_i)
+    if mu == None:
+        mu = S/R
+    Rz = R * mu[z]
+    # n <= 8 find R^0_{1-\alpha}
+    R0z = calculate_R0(n, Rz, alpha)
+    print "Rz=%f, R0z=%f" % (Rz, R0z)
+    theta_alpha = np.arccos(R0z / R)
+    return theta_alpha
+
+def estimate_confid_angle(P_i, alpha, mu=None):
+    log = np.log
+    sqrt = np.sqrt
+    arccos = np.arccos
+    z = 2
+    n = P_i.shape[0]
+    R, S = calc_R(P_i)
+    if mu == None:
+        mu = S/R
+    Rz = R * mu[z]
+
+    khat = estimate_kappa(P_i, mu=mu)
+    #print "khat %3f" % (khat)
+    if khat < 5:
+        if n <= 8:
+            R0 = calculate_R0(n, Rz, alpha)
+            theta_alpha = arccos(R0 / R)
+        if (n > 8) & (n < 30):
+            if (Rz > 0) & (Rz < n/4.):
+                Ra1 = sqrt(Rz**2 - 2 / 3. * n * log( alpha ))
+                theta_alpha = arccos(Ra1 / R)
+            elif (Rz >= n/4.) and (Rz <= 3 * n / 5.):
+                Ra1 = sqrt(Rz**2 - 2 / 3. * n * log( alpha ))
+                astar = alpha**(1 / (n - 1))
+                Ra2 = n * (1 - astar) + Rz * astar
+                Ra = (Ra1 + Ra2) / 2.
+                theta_alpha = arccos(Ra / R)
+            else: # Rz > 3n/5
+                assert (Rz > 3 * n / 5)
+                Ra2 = n * (1 - astar) + Rz * astar
+                theta_alpha = arccos(Ra2 / R)
+        else: # n > 30
+            #print "-",
+            assert(n >= 30)
+            theta_alpha = arccos(1 + log(alpha)/(khat * R))
+    else: # khat > 5
+        #print "*",
+        theta_alpha = arccos(1 - ((n - R) / R) * ((1 / alpha)**(1/(n-1)) - 1))
+    return theta_alpha
+
+def calc_confid_angle_Gidskehaug(kappa, alpha):
+    k = kappa
+    arccos = np.arccos
+    exp = np.exp
+    log = np.log
+    return arccos(1/k * log(exp(k) - (1-alpha) * (exp(k) - exp(-kappa))))
 
 # --------------------------- testing code ---------------------------
 
-def make_sphere_pts(n=1000):
-    elevation = np.random.uniform(low=-1.0, high=1.0, size=1000) * np.pi * 2
-    azimuth = np.random.uniform(low=-1.0, high=1.0, size=1000) * np.pi * 2
-    pts = np.array([np.cos(azimuth) * np.cos(elevation),
-                    np.sin(azimuth) * np.cos(elevation),
-                    np.sin(elevation)])
-    return pts
+def random_pars(mu=None, kappa=None, verbose=False):
+    if mu == None:
+        theta = np.random.uniform(low = -np.pi/2., high = np.pi/2.)
+        phi = np.random.uniform(low = -np.pi, high = np.pi)
+        if verbose: print "theta = %.3f, phi = %.3f" % (theta, phi)
+        mu = convert_polar_to_cartesian(theta, phi)
+    if kappa == None:
+        kappa = np.random.uniform(low=0., high=5.)
+    return mu, kappa
 
-def plot_pts(pts):
-    x = pts[0]
-    y = pts[1]
-    z = pts[2]
-    mlab.points3d(x,y,z)
 
-def points_on_sphere(n):
-    n = float(n) # in case we got an int which we surely got
-    pts = []
-    inc = np.pi * (3 - np.sqrt(5))
-    off = 2 / n
-    for k in range(int(n)):
-        y = k * off - 1 + (off / 2)
-        r = np.sqrt(1 - y * y)
-        phi = k * inc
-        pts.append([np.cos(phi) * r, y, np.sin(phi) * r]) 
-    return np.asarray(pts)
+def generate_Stephens1962_nomograms(resolution=3.):
+    alphas = [0.1, 0.05, 0.01]
+    n_alphas = len(alphas)
+    Ns = range(3,17) + [18,20,25,30]
+    n_Ns = len(Ns)
+    coords = np.ma.empty((n_alphas, n_Ns, max(Ns) * resolution))
+    coords.mask = ~np.isnan(coords)
+    R0s = np.ma.empty((n_alphas, n_Ns, max(Ns) * resolution))
+    R0s.mask = ~np.isnan(R0s)
+    for i_alpha, alpha in enumerate(alphas):
+        for i_N, N in enumerate(Ns):
+            Rstars = np.linspace(0, N, N * resolution)
+            for i_Rstar, Rstar in enumerate(Rstars):
+                if Rstar == N:
+                    Rstar -= 1e-1
+                coords[i_alpha, i_N, i_Rstar] = Rstar
+                R0 = calculate_R0(N, Rstar, alpha)
+                R0s[i_alpha, i_N, i_Rstar] = R0
+                R0s.mask[i_alpha, i_N, i_Rstar] = False
+    return alphas, Ns, coords, R0s
 
+def plot_Stephens1962_nomogram(alphas, Ns, Rstars, R0s,
+                               figure=1, txt_dx=0.1, txt_dy=0):
+    plt.subplots_adjust(top=0.95, hspace = 0.35)
+    n_alphas, n_Ns, n_Rstars = Rstars.shape
+    fig = plt.figure(num=figure)
+    axes = []
+    for i_alpha in xrange(n_alphas):
+        # draw each plot - different alpha
+        axes.append(fig.add_subplot(n_alphas, 1, i_alpha + 1))
+        axes[-1].set_title('alpha = ' + str(alphas[i_alpha]))
+        axes[-1].set_xlabel('R*')
+        axes[-1].set_ylabel('R0')
+        for i_N in xrange(n_Ns):
+            # draw each line - different N
+            axes[-1].plot(Rstars[i_alpha, i_N], R0s[i_alpha, i_N],
+                          'k-o', markersize=2)
+            Rstar_row = Rstars[i_alpha, i_N, ~Rstars.mask[i_alpha, i_N]]
+            R0_row = R0s[i_alpha, i_N, ~Rstars.mask[i_alpha, i_N]]
+            if Rstar_row.size != 0:
+                last_Rstar = Rstar_row[-1]
+                last_R0 = R0_row[-1]
+
+            axes[-1].text(last_Rstar + txt_dx, last_R0 + txt_dy,
+                          'N=' + str(Ns[i_N]), fontsize=7)
+
+# ------------------ visualization ---------------------
+
+def plot_pts(pts, mu=None):
+    p3d = mlab.pipeline
+
+    # plot unit sphere
+    sphere_pts = point_primitives.sphere()
+    sphere1 = mlab.mesh(*sphere_pts)
+    sphere1.actor.mapper.scalar_visibility = False
+    sphere1.actor.property.color = (241/255., 233/255., 199/255.)
+    sphere1.actor.property.opacity = 0.25
+
+    # plot pts
+    x = pts[...,0]
+    y = pts[...,1]
+    z = pts[...,2]
+    src = p3d.scalar_scatter(x,y,z)
+    glyphs = p3d.glyph(src)
+    glyphs.actor.property.color = (0.0, 0.0, 1.0)
+    glyphs.glyph.glyph_source.glyph_source = \
+      glyphs.glyph.glyph_source.glyph_list[4]
+    glyphs.glyph.glyph.scale_factor = 0.1
+
+    # plot mean
+    if mu != None:
+        zeros = np.zeros_like(mu[0])[..., np.newaxis]
+        mlab.quiver3d(zeros, zeros, zeros,
+                      mu[0, np.newaxis], mu[1, np.newaxis], mu[2, np.newaxis])
+
+def test_theta_P_single_dist(n_samples=1e5):
+    # generate a vMF distribution with a random mu (mean) and kappa (spread)
+    theta = np.random.uniform(low = -np.pi/2., high = np.pi/2.)
+    phi = np.random.uniform(low = -np.pi, high = np.pi)
+    mu = convert_polar_to_cartesian(theta, phi)
+    
+    kappa = np.random.uniform(low=1., high=5.)
+    P_i = vmf_rvs(mu, kappa, n_pts=n_samples)
+    
+    # estimate kappa from the distribution, and use the real mean
+    #k_hat = estimate_kappa(P_i, pop_mean=mu)
+    
+    # calculate the confidence cone angle
+    theta_confid = estimate_confid_angle(P_i, 0.5, mu=mu)
+    
+    # count how many of the variates lie inside the cone
+    angles = np.arccos(np.dot(P_i, mu))
+    return P_i, mu, theta_confid, (angles < theta_confid).sum()
+
+# def make_sphere_pts(n=1000):
+#     elevation = np.random.uniform(low=-1.0, high=1.0, size=1000) * np.pi * 2
+#     azimuth = np.random.uniform(low=-1.0, high=1.0, size=1000) * np.pi * 2
+#     pts = np.array([np.cos(azimuth) * np.cos(elevation),
+#                     np.sin(azimuth) * np.cos(elevation),
+#                     np.sin(elevation)])
+#     return pts
+
+# def points_on_sphere(n):
+#     # some weird distribution - not uniform
+#     n = float(n) # in casewe got an int which we surely got
+#     pts = []
+#     inc = np.pi * (3 - np.sqrt(5))
+#     off = 2 / n
+#     for k in range(int(n)):
+#         y = k * off - 1 + (off / 2)
+#         r = np.sqrt(1 - y * y)
+#         phi = k * inc
+#         pts.append([np.cos(phi) * r, y, np.sin(phi) * r]) 
+#     return np.asarray(pts)
+
+# def wrap_test_theta(n_repeats = 100):
+#     total = 0
+#     for i in xrange(n_repeats):
+#         total += test_theta_P()
+#     return total / float(n_repeats)
+
+# def debug_Stephens1962_nomograms(resolution=3.):
+#     alphas = [0.1,]
+#     n_alphas = len(alphas)
+#     Ns = range(3,17) + [18,20,25,30]
+#     #Ns = [12,16]
+#     n_Ns = len(Ns)
+#     coords = np.ma.empty((n_alphas, n_Ns, max(Ns) * resolution))
+#     coords.mask = ~np.isnan(coords)
+#     R0s = np.ma.empty((n_alphas, n_Ns, max(Ns) * resolution))
+#     R0s.mask = ~np.isnan(R0s)
+#     for i_alpha, alpha in enumerate(alphas):
+#         for i_N, N in enumerate(Ns):
+#             print 'processing N=%d' % (N)
+#             Rstars = np.linspace(0, N, N * resolution)
+#             for i_Rstar, Rstar in enumerate(Rstars):
+#                 if Rstar == N:
+#                     Rstar -= 1e-1
+#                     #print Rstar
+#                 print 'processing Rstar=%5.3f' % (Rstar)
+#                 coords[i_alpha, i_N, i_Rstar] = Rstar
+#                 R0_low = 0
+#                 R0_high = max(Ns)
+#                 R0 = calculate_R0(N, Rstar, alpha)#, R0_low, R0_high)
+#                 R0s[i_alpha, i_N, i_Rstar] = R0
+#                 R0s.mask[i_alpha, i_N, i_Rstar] = False
+#     return alphas, Ns, coords, R0s
+    
+# def debug2_Stephens1962_nomograms(N, Rstar, alpha, resolution=5., figure=2):
+#     R0s = np.linspace(0, N, N*resolution)
+#     fns = np.empty_like(R0s)
+#     for i_R0, R0 in enumerate(R0s):
+#         fns[i_R0] = prob_fn(R0, N, Rstar, alpha)
+#     plt.figure(figure)
+#     useful = fns < 1.
+#     #plt.plot(R0s, fns, 'k.-')
+#     slope = np.diff(fns[useful])
+    
+#     plt.plot(R0s[useful][:-1][slope < 0],
+#              fns[useful][:-1][slope < 0], 'b')
+#     plt.plot(R0s[useful][:-1][slope > 0],
+#              fns[useful][:-1][slope > 0], 'r')
+#     plt.draw()
+#     return R0s, fns, slope
+
+# def gradient_descent(fn, start=0, args=(), init_delta=1.,
+#                      gamma=0.01, err=1e-8, full_output=False):
+#     # let's start at 0 always - should be okay for this function
+#     pt = start
+#     delta = init_delta
+#     while np.abs(delta) > err:
+#         if full_output:
+#             print 'pt: %10.8f' % (pt),
+#         grad = (fn(pt + delta, *args) - fn(pt, *args)) / delta
+#         if full_output:
+#             print 'grad: %10.2g' % (grad),
+#         delta = -gamma * grad / np.maximum(fn(pt, *args), 1.)
+#         if full_output:
+#             print '  delta: %5.2f' % (delta)
+#         pt += delta
+#     return pt

@@ -1,5 +1,8 @@
 import numpy as np
-from numpy.linalg import norm
+#from numpy.linalg import norm
+
+def norm(vec):
+    return np.sqrt(np.sum(vec**2))
 
 def perpz(vec):
     '''returns the unit length vector perpendicular
@@ -75,7 +78,7 @@ def rotate_by_angles(vector, theta, phi):
     theta : scalar
       angle of rotation to z axis
     phi : scalar
-      angle of rotation to x and y axes
+      angle of rotation in x-y plane, CCW from x axis
 
     Returns
     -------
@@ -84,72 +87,8 @@ def rotate_by_angles(vector, theta, phi):
       '''
     cos, sin = np.cos, np.sin
     t, ph = theta, phi
-    A = np.array(([cos(t) * cos(ph), 0,       sin(t) * cos(ph)], \
-                  [cos(t) * sin(ph), cos(ph), sin(t) * sin(ph)], \
-                  [-sin(t),          0,       cos(t)]))
+    A = np.array(([cos(t) * cos(ph), cos(t) * sin(ph), -sin(t)], \
+                  [-sin(ph),         cos(ph),          0], \
+                  [sin(t) * cos(ph), sin(t) * sin(ph), cos(t)])).T
     return np.dot(A, vector)
 
-def convert_angles_to_components(theta, phi):
-    '''Convert a point described by two angles to Cartesian co-ordinates.
-
-    Parameters
-    ----------
-    theta : scalar
-      angle of rotation to z axis
-    phi : scalar
-      angle of rotation to x and y axes
-
-    Returns
-    -------
-    vector : array, shape (3,)
-      x,y,z co-ordinates of equivalent vector
-    '''
-    sin, cos = np.sin, np.cos
-    x = sin(theta) * cos(phi)
-    y = sin(theta) * sin(phi)
-    z = cos(theta)
-    return np.array((x,y,z))
-
-def convert_components_to_angles(vector):
-    '''Convert a vector into two angles
-
-    Parameters
-    ----------
-    mu : array_like, shape (3,)
-      x,y,z components of vector
-
-    Returns
-    -------
-    theta : scalar
-      angle from z axis
-    phi : scalar
-      angle in x/y axes
-    '''
-    x,y,z = vector
-    pi = np.pi
-
-    theta = np.arccos(z)
-    phi = np.arctan(y/x) # first pass
-
-    # now sanitize phi according to convention
-    # (anticlockwise rotation, angle +ve)
-    if (x > 0) & (y > 0):
-        assert (phi > 0) & (phi < pi/2.)
-    elif (x < 0) & (y > 0):
-        phi = pi/2. - phi
-        assert (phi > pi/2.) & (phi < pi)
-    elif (x < 0) & (y < 0):
-        phi += pi/2.
-        assert (phi > pi) & (phi < 3 * pi / 2.)
-    elif (x > 0) & (y < 0):
-        phi = 2 * pi - phi
-        assert (phi > 3 * pi / 2.) & (pi < 2 * pi)
-    elif (x == 0) and (y < 0):
-        phi = 3 * pi / 2.
-    elif (x == 0) and (y > 0):
-        phi = pi / 2.
-    elif (x > 0) and (y == 0):
-        phi = 0.
-    elif (x < 0) and (y == 0):
-        phi = pi
-    return theta, phi
