@@ -30,3 +30,12 @@ class LineCycler():
             style = colours[self.c % n_styles]
             self.c += 1
         return style
+
+class FigNumer():
+    def __init__(self):
+        self.next_num = 0
+
+    def __call__(self):
+        next_num = self.next_num
+        self.next_num += 1
+        return next_num

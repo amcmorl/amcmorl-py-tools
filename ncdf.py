@@ -2,7 +2,7 @@ from numpy import asarray, float64, ndarray, array, uint8
 import numpy as n
 import os.path
 
-posmods = ['pynetcdf', 'Scientific.IO.NetCDF', 'Scientific_NetCDF']
+posmods = ['pynetcdf', 'Scientific.IO.NetCDF', 'Scientific_NetCDF', 'pupynere']
 tried = 0
 for mod in posmods:
     try:

@@ -18,13 +18,13 @@ def convert_polar_to_cartesian(theta, phi):
       angle of rotation in x-y plane, counter-clockwise from x axis
       +ve y is defined to be next CCW from +x, as in:
 
-           +y
-           /\
-           ||
-      -x<--  -->+x
-           ||
-           \/
-           -y
+            +y
+            /\
+            ||
+      -x <--  --> +x
+            ||
+            \/
+            -y
            
     Returns
     -------
@@ -95,6 +95,18 @@ def calc_R(P_i):
     return R, S
 
 def mean_dir(P_i):
+    '''Calculates the mean direction of a set of unit vectors on a sphere.
+
+    Parameters
+    ----------
+    P_i : array_like, shape (n_pts, 3)
+        n * x,y,z components of vectors
+
+    Returns
+    -------
+    vector : array_like, shape (3,)
+        x,y,z components of mean direction vector
+    '''
     R, S = calc_R(P_i)
     return S/R
 
@@ -239,7 +251,52 @@ def calculate_R0(N, Rstar, alpha): #Ro_low, Ro_high):
 
 def prob_fn(Ro, N, Rstar, alpha):
     return (P(N, Ro) / P(N, Rstar) - alpha)**2
-#----------------------------------------------------------------------------   
+#----------------------------------------------------------------------------
+
+def estimate_confid_angle(P_i, alpha, mu=None, verbose=False):
+    log = np.log
+    sqrt = np.sqrt
+    arccos = np.arccos
+    z = 2
+    n = P_i.shape[0]
+    R, S = calc_R(P_i)
+    if mu == None:
+        mu = S/R
+    #Rz = R * mu[z]
+    Rz = R
+    
+    khat = estimate_kappa(P_i, mu=mu)
+    #print "khat %3f" % (khat)
+    if khat < 5:
+        if n <= 30:
+            R0 = calculate_R0(n, Rz, alpha)
+            theta_alpha = arccos(R0 / R)
+        elif (n > 8) & (n < 30):
+            if (Rz > 0) & (Rz < n/4.):
+                Ra1 = sqrt(Rz**2 - 2 / 3. * n * log( alpha ))
+                theta_alpha = arccos(Ra1 / R)
+            elif (Rz >= n/4.) and (Rz <= 3 * n / 5.):
+                Ra1 = sqrt(Rz**2 - 2 / 3. * n * log( alpha ))
+                astar = alpha**(1 / (n - 1))
+                Ra2 = n * (1 - astar) + Rz * astar
+                Ra = (Ra1 + Ra2) / 2.
+                theta_alpha = arccos(Ra / R)
+            else: # Rz > 3n/5
+                assert (Rz > (3 * n / 5))
+                astar = alpha**(1 / (n - 1))
+                Ra2 = n * (1 - astar) + Rz * astar
+                theta_alpha = arccos(Ra2 / R)
+        else: # n > 30
+            if verbose: print "-",
+            assert(n >= 30)
+            # !!!!!!!!!!!!!!!!!!!!!!!!
+            theta_alpha = arccos(1 + log(alpha)/(khat * R))
+    else: # khat >= 5
+        if verbose: print "*",
+        # !!!!!!!!!!!!!!!!!!!!!!!!            
+        theta_alpha = arccos(1 - ((n - R) / R) *
+                             ((1 / alpha)**(1/float(n-1)) - 1))
+    return theta_alpha
 
 def calc_confid_angle(P_i, alpha, mu=None):
     '''calculates the (1 - alpha) * 100% confidence interval for the given
@@ -272,115 +329,79 @@ def calc_confid_angle(P_i, alpha, mu=None):
     theta_alpha = np.arccos(R0z / R)
     return theta_alpha
 
-def estimate_confid_angle(P_i, alpha, mu=None):
-    log = np.log
-    sqrt = np.sqrt
-    arccos = np.arccos
-    z = 2
-    n = P_i.shape[0]
-    R, S = calc_R(P_i)
-    if mu == None:
-        mu = S/R
-    Rz = R * mu[z]
+# dispersion measurement -----------------------------------------------------
 
-    khat = estimate_kappa(P_i, mu=mu)
-    #print "khat %3f" % (khat)
-    if khat < 5:
-        if n <= 8:
-            R0 = calculate_R0(n, Rz, alpha)
-            theta_alpha = arccos(R0 / R)
-        if (n > 8) & (n < 30):
-            if (Rz > 0) & (Rz < n/4.):
-                Ra1 = sqrt(Rz**2 - 2 / 3. * n * log( alpha ))
-                theta_alpha = arccos(Ra1 / R)
-            elif (Rz >= n/4.) and (Rz <= 3 * n / 5.):
-                Ra1 = sqrt(Rz**2 - 2 / 3. * n * log( alpha ))
-                astar = alpha**(1 / (n - 1))
-                Ra2 = n * (1 - astar) + Rz * astar
-                Ra = (Ra1 + Ra2) / 2.
-                theta_alpha = arccos(Ra / R)
-            else: # Rz > 3n/5
-                assert (Rz > 3 * n / 5)
-                Ra2 = n * (1 - astar) + Rz * astar
-                theta_alpha = arccos(Ra2 / R)
-        else: # n > 30
-            #print "-",
-            assert(n >= 30)
-            theta_alpha = arccos(1 + log(alpha)/(khat * R))
-    else: # khat > 5
-        #print "*",
-        theta_alpha = arccos(1 - ((n - R) / R) * ((1 / alpha)**(1/(n-1)) - 1))
-    return theta_alpha
+def measure_percentile_angle_ex_kappa(kappa, percentile=0.95, n_pts=int(1e3)):
+    '''
+    Creates a random distribution with large `n` and dispersion `kappa`,
+    and finds the angle that encompasses `confid` * 100% of the pts. 
+    
+    Parameters
+    ----------
+    kappa : float
+        dispersion parameter of points
+    percentile : float
+        proportion of points to include inside angle
+    n_pts : int
+        number of points to create in distribution
 
-def calc_confid_angle_Gidskehaug(kappa, alpha):
-    k = kappa
-    arccos = np.arccos
-    exp = np.exp
-    log = np.log
-    return arccos(1/k * log(exp(k) - (1-alpha) * (exp(k) - exp(-kappa))))
+    Returns
+    -------
+    theta_percentile : float
+        angle that encompasses `percentile` * 100% of points `P_i`    
+    
+    Notes
+    -----
+    In this case I think theta_alpha does not depend on n, so it is best
+    to estimate with a large n for better accuracy.
+    '''
+    perpvec = np.array((0., 0., 1.))
+    P_i = vmf_rvs(perpvec, kappa, n_pts=n_pts)
+    return measure_percentile_angle(P_i, percentile=percentile)
 
-# --------------------------- testing code ---------------------------
+def measure_percentile_angle(P_i, percentile=0.95):
+    '''
+    Find the angle that encompasses percentile * 100% of the pts in `P_i`.
+    
+    Parameters
+    ----------
+    P_i : array_like, shape (n_pts, 3)
+        x,y,z vectors of unit length points on a sphere
+    percentile : float
+        proportion of points to include inside angle
 
-def random_pars(mu=None, kappa=None, verbose=False):
-    if mu == None:
-        theta = np.random.uniform(low = -np.pi/2., high = np.pi/2.)
-        phi = np.random.uniform(low = -np.pi, high = np.pi)
-        if verbose: print "theta = %.3f, phi = %.3f" % (theta, phi)
-        mu = convert_polar_to_cartesian(theta, phi)
-    if kappa == None:
-        kappa = np.random.uniform(low=0., high=5.)
-    return mu, kappa
+    Returns
+    -------
+    theta_percentile : float
+        angle that encompasses `percentile` * 100% of points `P_i`
+    '''
+    # find angles between sample mean and each pt
+    muhat = mean_dir(P_i)
+    angles_to_mean = np.arccos(np.dot(muhat, P_i.T))
+    
+    # take percentile of angles
+    sort_idxs = np.argsort(angles_to_mean)
+    sorted_angles = angles_to_mean[sort_idxs]
+    n_pts = P_i.shape[0]
+    pc_pts = np.arange(1, n_pts+1) / float(n_pts)
+    #... percentiles of each sorted pt
+    pt_below = np.nonzero(pc_pts < percentile)[0][-1]
+    pt_above = np.nonzero(pc_pts > percentile)[0][0]
+    pc_below = pc_pts[pt_below]
+    pc_above = pc_pts[pt_above]
+    theta_below = sorted_angles[pt_below]
+    theta_above = sorted_angles[pt_above]
 
-
-def generate_Stephens1962_nomograms(resolution=3.):
-    alphas = [0.1, 0.05, 0.01]
-    n_alphas = len(alphas)
-    Ns = range(3,17) + [18,20,25,30]
-    n_Ns = len(Ns)
-    coords = np.ma.empty((n_alphas, n_Ns, max(Ns) * resolution))
-    coords.mask = ~np.isnan(coords)
-    R0s = np.ma.empty((n_alphas, n_Ns, max(Ns) * resolution))
-    R0s.mask = ~np.isnan(R0s)
-    for i_alpha, alpha in enumerate(alphas):
-        for i_N, N in enumerate(Ns):
-            Rstars = np.linspace(0, N, N * resolution)
-            for i_Rstar, Rstar in enumerate(Rstars):
-                if Rstar == N:
-                    Rstar -= 1e-1
-                coords[i_alpha, i_N, i_Rstar] = Rstar
-                R0 = calculate_R0(N, Rstar, alpha)
-                R0s[i_alpha, i_N, i_Rstar] = R0
-                R0s.mask[i_alpha, i_N, i_Rstar] = False
-    return alphas, Ns, coords, R0s
-
-def plot_Stephens1962_nomogram(alphas, Ns, Rstars, R0s,
-                               figure=1, txt_dx=0.1, txt_dy=0):
-    plt.subplots_adjust(top=0.95, hspace = 0.35)
-    n_alphas, n_Ns, n_Rstars = Rstars.shape
-    fig = plt.figure(num=figure)
-    axes = []
-    for i_alpha in xrange(n_alphas):
-        # draw each plot - different alpha
-        axes.append(fig.add_subplot(n_alphas, 1, i_alpha + 1))
-        axes[-1].set_title('alpha = ' + str(alphas[i_alpha]))
-        axes[-1].set_xlabel('R*')
-        axes[-1].set_ylabel('R0')
-        for i_N in xrange(n_Ns):
-            # draw each line - different N
-            axes[-1].plot(Rstars[i_alpha, i_N], R0s[i_alpha, i_N],
-                          'k-o', markersize=2)
-            Rstar_row = Rstars[i_alpha, i_N, ~Rstars.mask[i_alpha, i_N]]
-            R0_row = R0s[i_alpha, i_N, ~Rstars.mask[i_alpha, i_N]]
-            if Rstar_row.size != 0:
-                last_Rstar = Rstar_row[-1]
-                last_R0 = R0_row[-1]
-
-            axes[-1].text(last_Rstar + txt_dx, last_R0 + txt_dy,
-                          'N=' + str(Ns[i_N]), fontsize=7)
+    # now weight two angles by how close they are to confid
+    #- i.e. linearly interpolate between them
+    theta_percentile = ((percentile - pc_below) * theta_above + \
+			(pc_above - percentile) * theta_below) / \
+			(pc_above - pc_below)
+    return theta_percentile
 
 # ------------------ visualization ---------------------
 
-def plot_pts(pts, mu=None):
+def plot_pts(pts=None, mu=None):
     p3d = mlab.pipeline
 
     # plot unit sphere
@@ -391,15 +412,16 @@ def plot_pts(pts, mu=None):
     sphere1.actor.property.opacity = 0.25
 
     # plot pts
-    x = pts[...,0]
-    y = pts[...,1]
-    z = pts[...,2]
-    src = p3d.scalar_scatter(x,y,z)
-    glyphs = p3d.glyph(src)
-    glyphs.actor.property.color = (0.0, 0.0, 1.0)
-    glyphs.glyph.glyph_source.glyph_source = \
-      glyphs.glyph.glyph_source.glyph_list[4]
-    glyphs.glyph.glyph.scale_factor = 0.1
+    if pts != None:
+        x = pts[...,0]
+        y = pts[...,1]
+        z = pts[...,2]
+        src = p3d.scalar_scatter(x,y,z)
+        glyphs = p3d.glyph(src)
+        glyphs.actor.property.color = (0.0, 0.0, 1.0)
+        glyphs.glyph.glyph_source.glyph_source = \
+            glyphs.glyph.glyph_source.glyph_list[4]
+        glyphs.glyph.glyph.scale_factor = 0.1
 
     # plot mean
     if mu != None:
@@ -407,24 +429,55 @@ def plot_pts(pts, mu=None):
         mlab.quiver3d(zeros, zeros, zeros,
                       mu[0, np.newaxis], mu[1, np.newaxis], mu[2, np.newaxis])
 
-def test_theta_P_single_dist(n_samples=1e5):
-    # generate a vMF distribution with a random mu (mean) and kappa (spread)
-    theta = np.random.uniform(low = -np.pi/2., high = np.pi/2.)
-    phi = np.random.uniform(low = -np.pi, high = np.pi)
-    mu = convert_polar_to_cartesian(theta, phi)
+def plot_circle(mu, theta, scalars=None, scalar_max=None,
+		color=None, radius=0.01,
+		resolution=50.):
+    x,y,z = 0,1,2
+    phi_prime = np.linspace(0, 2 * np.pi, resolution)
+    # start with defining cone around (0,0,1)
+    origin = np.array((0.,0.,1.))
+    P_j = np.array([vectors.rotate_by_angles(origin, theta, q)
+                    for q in phi_prime]).T
+    theta, phi = convert_cartesian_to_polar(mu)
+    P_k = vectors.rotate_by_angles(P_j, theta, phi)
+	    
+    p3d = mlab.pipeline
+    if scalars == None:
+	tube = p3d.tube(p3d.line_source(P_k[x], P_k[y], P_k[z]))
+    else:
+	if type(scalars) == type(1) or type(scalars == type(1.)):
+	    #'arraying %d' % (
+	    scalars *= np.ones_like(P_k[0])
+	    #'assigning scalars 
+	    tube = p3d.tube(p3d.line_source(P_k[x],
+					    P_k[y],
+					    P_k[z], scalars))
+	    tube.filter.radius = radius
+	    surf = p3d.surface(tube)
+    if color != None:
+	surf.actor.actor.property.color = color
+    if scalar_max != None:
+	mm = surf.module_manager.scalar_lut_manager
+	mm.data_range = np.array([0, scalar_max])
+
+# def test_theta_P_single_dist(n_samples=1e5):
+#     # generate a vMF distribution with a random mu (mean) and kappa (spread)
+#     theta = np.random.uniform(low = -np.pi/2., high = np.pi/2.)
+#     phi = np.random.uniform(low = -np.pi, high = np.pi)
+#     mu = convert_polar_to_cartesian(theta, phi)
     
-    kappa = np.random.uniform(low=1., high=5.)
-    P_i = vmf_rvs(mu, kappa, n_pts=n_samples)
+#     kappa = np.random.uniform(low=1., high=5.)
+#     P_i = vmf_rvs(mu, kappa, n_pts=n_samples)
     
-    # estimate kappa from the distribution, and use the real mean
-    #k_hat = estimate_kappa(P_i, pop_mean=mu)
+#     # estimate kappa from the distribution, and use the real mean
+#     #k_hat = estimate_kappa(P_i, pop_mean=mu)
     
-    # calculate the confidence cone angle
-    theta_confid = estimate_confid_angle(P_i, 0.5, mu=mu)
+#     # calculate the confidence cone angle
+#     theta_confid = estimate_confid_angle(P_i, 0.5, mu=mu)
     
-    # count how many of the variates lie inside the cone
-    angles = np.arccos(np.dot(P_i, mu))
-    return P_i, mu, theta_confid, (angles < theta_confid).sum()
+#     # count how many of the variates lie inside the cone
+#     angles = np.arccos(np.dot(P_i, mu))
+#     return P_i, mu, theta_confid, (angles < theta_confid).sum()
 
 # def make_sphere_pts(n=1000):
 #     elevation = np.random.uniform(low=-1.0, high=1.0, size=1000) * np.pi * 2
@@ -513,3 +566,11 @@ def test_theta_P_single_dist(n_samples=1e5):
 #             print '  delta: %5.2f' % (delta)
 #         pt += delta
 #     return pt
+
+# def calc_confid_angle_Gidskehaug(kappa, alpha):
+#     k = kappa
+#     arccos = np.arccos
+#     exp = np.exp
+#     log = np.log
+#     return arccos(1/k * log(exp(k) - (1-alpha) * (exp(k) - exp(-kappa))))
+
