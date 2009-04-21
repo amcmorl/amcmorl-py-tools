@@ -9,3 +9,16 @@ def sphere(radius=1.0, npts=(100,100)):
     y = radius * np.sin(phi) * np.sin(theta)
     z = radius * np.cos(phi)
     return x, y, z
+
+x = np.array([[ 1,  1],
+              [ 1,  1],
+              [-1, -1],
+              [-1, -1]])
+y = np.array([[-1,  1],
+              [-1,  1],
+              [-1,  1],
+              [-1,  1]])
+z = np.array([[-1, -1],
+              [ 1,  1],
+              [ 1,  1],
+              [-1, -1]])

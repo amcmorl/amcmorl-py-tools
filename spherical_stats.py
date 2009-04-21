@@ -131,7 +131,7 @@ def estimate_kappa(P_i, mu=None):
     Code is based on equations in Statistical Analysis of Spherical Data,
     1987 by NI Fisher, T Lewis, and BJJ Embleton, section 5.3.2(iv).
 
-    coth(\kappa) = 1/\kappa = R/n
+    coth(\kappa) - 1/\kappa = R/n
 
     where R/n is the mean resultant vector.
 
