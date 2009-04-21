@@ -22,3 +22,16 @@ z = np.array([[-1, -1],
               [ 1,  1],
               [ 1,  1],
               [-1, -1]])
+
+def cube():
+    '''returns corners of a cube with corners at +\-1 from center'''
+    corners = np.asarray([[-1, -1, -1],
+                          [-1, -1,  1],
+                          [-1,  1, -1],
+                          [-1,  1,  1],
+                          [ 1, -1, -1],
+                          [ 1, -1,  1],
+                          [ 1,  1, -1],
+                          [ 1,  1,  1]])
+    x, y, z = corners.T
+    return x, y, z
