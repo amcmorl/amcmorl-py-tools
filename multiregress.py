@@ -32,5 +32,6 @@ def multiregress(xs, y):
     s_y = np.sqrt(resid / (n - k - 1.)) # unexplained SD
     G_mult = np.linalg.inv( np.cov( xs.T ) * (n - 1) )
     se = s_y * np.sqrt(G_mult[np.eye(k, dtype=bool)])
-    assert(se[0] == se[1])
+    #assert(se[0] == se[1])
+    # assert is that se(x) == se(y) which is true when directions are symmetrical
     return b, se

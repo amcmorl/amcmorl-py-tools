@@ -430,7 +430,7 @@ def plot_pts(pts=None, mu=None):
                       mu[0, np.newaxis], mu[1, np.newaxis], mu[2, np.newaxis])
 
 def plot_circle(mu, theta, scalars=None, scalar_max=None,
-		color=None, radius=0.01,
+		color=None, radius=0.01, alpha=1.,
 		resolution=50.):
     x,y,z = 0,1,2
     phi_prime = np.linspace(0, 2 * np.pi, resolution)
@@ -456,6 +456,7 @@ def plot_circle(mu, theta, scalars=None, scalar_max=None,
 	    surf = p3d.surface(tube)
     if color != None:
 	surf.actor.actor.property.color = color
+    surf.actor.actor.property.opacity = alpha
     if scalar_max != None:
 	mm = surf.module_manager.scalar_lut_manager
 	mm.data_range = np.array([0, scalar_max])
