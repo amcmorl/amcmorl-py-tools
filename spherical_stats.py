@@ -1,21 +1,27 @@
 import numpy as np
-from enthought.mayavi import mlab
-import scipy.optimize as opt
-from scipy.integrate import quad
-import vectors
-import matplotlib.pyplot as plt
-from scipy.io import read_array
 import point_primitives
+import scipy.optimize as opt
+import vectors
+from enthought.mayavi import mlab
+from scipy.integrate import quad
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
-def convert_polar_to_cartesian(theta, phi):
-    '''Convert a point described by two angles to Cartesian co-ordinates.
+''' Naming and angle conventions:
 
-    Parameters
-    ----------
-    theta : scalar
-      angle of rotation to z axis
-    phi : scalar
-      angle of rotation in x-y plane, counter-clockwise from x axis
+    2d cartesian:
+      x = +left -right
+      y = +up -down
+
+    2d polar:
+      psi = angle from left, 0 -- 2 * pi
+      rho = radius
+
+    3d cartesian:
+      x
+      y
+      z
+
       +ve y is defined to be next CCW from +x, as in:
 
             +y
@@ -25,6 +31,21 @@ def convert_polar_to_cartesian(theta, phi):
             ||
             \/
             -y
+
+      
+    3d polar (on unit sphere):
+      theta = angle from +z, 0 -- pi
+      phi = angle from +x, rotating CCW, i.e. first towards +y,
+            in x-y plane, 0 -- 2 * pi
+'''
+
+def convert_polar_to_cartesian(theta, phi):
+    '''Convert a point described by two angles to Cartesian co-ordinates.
+
+    Parameters
+    ----------
+    theta : scalar
+    phi : scalar
            
     Returns
     -------
@@ -48,10 +69,7 @@ def convert_cartesian_to_polar(vector):
     Returns
     -------
     theta : scalar
-      angle from z axis
     phi : scalar
-      angle in x-y plane, from counter-clockwise from x axis
-      +ve y is defined to be next CCW from +x
     '''
     x,y,z = vector
     pi = np.pi
@@ -62,30 +80,220 @@ def convert_cartesian_to_polar(vector):
         #... automatically define as 0
         phi = 0.
     else:
-        phi = np.arctan(y/x) # first pass
-        # now sanitize phi according to convention
-        # (anticlockwise rotation, angle +ve)
-        if (x > 0) & (y > 0):
-            assert (phi > 0) & (phi < pi/2.)
-        elif (x < 0) & (y > 0):
-            phi += pi
-            assert (phi > pi /2.) & (phi < pi)
-        elif (x < 0) & (y < 0):
-            phi += pi
-            assert (phi > pi) & (phi < 3 * pi / 2.)
-        elif (x > 0) & (y < 0):
-            phi += 2 * pi
-            assert (phi > 3 * pi / 2.) & (pi < 2 * pi)
-        elif (x > 0) and (y == 0): # +x axis
-            phi = 0.
-        elif (x == 0) and (y > 0): # +y axis
-            phi = pi / 2.
-        elif (x < 0) and (y == 0): # -x axis
-            phi = pi
-        elif (x == 0) and (y < 0): # -y axis
-            phi = 3 * pi / 2.
+        phi = np.arctan2(y,x) # first pass
     return theta, phi
 
+# --------------------------- spherical geometry  ----------------------------
+
+def polar_to_cart_2d(x, y):
+    '''
+    Parameters
+    ----------
+    x, y : scalars
+
+    Returns
+    -------
+    psi, rho : scalars
+    '''
+    rho = np.sqrt(x**2 + y**2)
+    psi = np.arctan2(y, x)
+    return rho, psi
+
+def cart_to_polar_2d(rho, psi):
+    '''
+    Parameters
+    ----------
+    psi, rho : scalars
+
+    Returns
+    -------
+    x, y : scalars
+    '''
+    x = rho * np.cos(psi)
+    y = rho * np.sin(psi)
+    return x, y
+    
+class Lambertograph(object):
+    '''A stereographic plot of a sphere on to a 2d plane'''
+    
+    def __init__(self, cmap=mpl.cm.Blues, n_items=None):
+        self.theory_rmax = np.sqrt(2.)
+        self.figure = plt.figure(figsize=(8,4))
+        self.ax_top = self.figure.add_subplot(121, projection='polar',
+                                              resolution=1)
+        self.ax_top.set_thetagrids([])
+        self.ax_top.set_rticks([])
+        self.ax_bot = self.figure.add_subplot(122, projection='polar',
+                                              resolution=1)
+        self.ax_bot.set_thetagrids([])
+        self.ax_bot.set_rticks([])
+        self.scale_axes()
+        self.ax_top.set_autoscale_on(False)
+        self.ax_bot.set_autoscale_on(False)
+
+        self.cmap = cmap
+        self.n_items = n_items
+        self.i_item = 0
+        
+    def next_colour(self, inc=True):
+        if self.n_items == None:
+            return self.cmap(0)
+        else:
+            c_ind = 255 * self.i_item / float(self.n_items)
+            next_colour = self.cmap(int(round(c_ind)))
+            if inc:
+                self.i_item += 1
+            return next_colour
+        
+    def project_polar(self, polar_coords):
+        theta, phi = polar_coords
+        rho, psi = 2 * np.sin((np.pi - theta)/2.), phi
+        return rho, psi
+
+    def flip_hemisphere_polar(self, polar_coords):
+        theta, phi = polar_coords
+        # flip theta
+        theta = np.pi - theta
+        # flip phi
+        phi = (np.pi - phi) % (2 * np.pi)
+        return theta, phi
+        
+    def plot_xy(self, X, Y, Z, inc_color=True):
+        if Z > 0:
+            # need to flip hemisphere over and change axes accordingly
+            ax = self.ax_top
+            Z *= -1
+            X *= -1
+        else:
+            ax = self.ax_bot
+
+        x, y = X * np.sqrt(2/(1. - Z)), Y * np.sqrt(2/(1. - Z))
+        rho, psi = cart_to_polar_2d(x, y)
+        ax.plot((psi,), (rho,), 'o', color=self.next_colour())
+        if rho.max() > self.theory_rmax:
+            print "Range warning."
+        plt.draw()
+        
+    def plot_polar(self, theta, phi, inc_color=True):
+        if theta < np.pi/2.:
+            # flip hemisphere
+            ax = self.ax_top
+            theta, phi = self.flip_hemisphere_polar((theta, phi))
+        else:
+            ax = self.ax_bot
+        rho, psi = self.project_polar((theta, phi))
+        ax.plot((psi,), (rho,), 'o', color=self.next_colour())
+        if rho.max() > self.theory_rmax:
+            print "Range warning."
+        plt.draw()
+
+    def plot_circle(self, theta, phi, angle, resolution=100., inc_color=True):
+        # calculate points in circle, in X,Y,Z
+        x, y, z = 0, 1, 2
+        rho, psi = 0, 1
+        P_c = generate_cone_circle(theta, phi, angle)
+        P_c = P_c # [:-1]
+
+        if angle > np.pi/2.:
+            print "!",
+            symbol = '--'
+        else:
+            symbol = '-'
+        # divide circle points into each hemisphere
+        top_hemisphere = P_c[..., z] >= 0
+        bot_hemisphere = P_c[..., z] <= 0
+        # convert P_c to 3d polar co-ordinates
+        P_p = np.apply_along_axis(convert_cartesian_to_polar, 1, P_c)
+        
+        # correct order of points must be maintained!!
+        # there are three cases: top only, bottom only, top and bottom
+        if np.all(top_hemisphere):
+            # top only
+            # flip hemisphere
+            P_flipped = np.apply_along_axis(self.flip_hemisphere_polar, 1, P_p)
+            # convert to Lambert projection
+            Q_p = np.apply_along_axis(self.project_polar, 1, P_flipped)
+            #if np.diff(Q_p[..., psi])[0] > 0.:
+            #    Q_p = Q_p[::-1]
+            self.ax_top.plot(Q_p[..., psi], Q_p[..., rho], symbol,
+                             color=self.next_colour(inc=inc_color))
+            
+        elif np.all(bot_hemisphere):
+            # bottom only
+            # convert P_p to Lambert projection
+            Q_p = np.apply_along_axis(self.project_polar, 1,
+                                      P_p % (2 * np.pi))
+
+            self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho], symbol,
+                             color=self.next_colour(inc=inc_color))
+            plt.draw()
+            #return P_c, P_p, Q_p
+        
+        else:
+            # top and bottom
+            # rotate points list to a beginning 
+            # (can rely on there being at most one contiguous
+            #  region in each hemisphere)
+            switch_pt = np.nonzero(np.diff(top_hemisphere))[0][0] + 1
+            P_roll = np.roll(P_p, switch_pt, axis=0)
+            P_top_mask = np.roll(top_hemisphere, switch_pt, axis=0)
+            P_bot_mask = np.roll(bot_hemisphere, switch_pt, axis=0)
+            P_top = P_roll[P_top_mask]
+            P_bot = P_roll[P_bot_mask]
+            
+            # flip top hemisphere
+            P_flipped = np.apply_along_axis(self.flip_hemisphere_polar,
+                                            1, P_top)
+            
+            # convert to Lambert projection
+            Q_top = np.apply_along_axis(self.project_polar, 1,
+                                        P_flipped % (2 * np.pi))
+            Q_bot = np.apply_along_axis(self.project_polar, 1,
+                                        P_bot)
+
+            # plot each set of points
+            self.ax_top.plot(Q_top[..., psi], Q_top[..., rho], symbol,
+                             color=self.next_colour(inc=inc_color))
+            self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho], symbol,
+                             color=self.next_colour(inc=inc_color))
+            plt.draw()
+            #return P_c, P_p, P_top, P_bot, Q_top, Q_bot
+
+    def scale_axes(self):
+        self.ax_top.set_rmax(np.sqrt(2.))
+        self.ax_bot.set_rmax(np.sqrt(2.))
+
+    def clear(self):
+        self.ax_top.lines = []
+        self.ax_bot.lines = []
+        plt.draw()
+
+    def savefig(self, filename):
+        self.figure.savefig(filename)
+        
+def parameterized_circle_3d(t, a, b, c):
+    '''Returns a point on a circle defined by two points on the circle, its center, and the angle around the circle from the first point.
+
+    Parameters
+    ----------
+    t : scalar
+        angle parameter around circle, starting at `a`
+    a : sequence, (3,)
+        x,y,z position of first pt on circle
+    b : sequence, (3,)
+        x,y,z position of second pt on circle
+    c : sequence, (3,)
+        x,y,z position of circle center
+        '''
+    r = np.sqrt(((a - c) ** 2).sum())
+    # u is unit vector from center to a
+    u = (a - c) / r
+    # n is unit normal to circle
+    n = np.cross(a - c, b - c)
+    len_n = np.sqrt((n**2).sum())
+    n /= len_n
+    return r * np.cos(t) * u + r * np.sin(t) * np.cross(n, u) + c
+        
 # -------------------------- von-Mises-Fisher dist ---------------------------
 
 def calc_R(P_i):
@@ -171,7 +379,29 @@ def C_F(kappa):
     1987 by NI Fisher, T Lewis, and BJJ Embleton, equation 4.21'''
     return kappa / (2 * np.pi * (np.exp(kappa) - np.exp(-kappa)))
 
-def vmf_pdf(theta, kappa):
+def vmf_pde(a, b, th, ph, k):
+    '''Returns the probability density estimate for the von-Mises-Fisher function, for the 3d case, at the angle (th, ph), with mean (a, b), and spread k.
+
+     Equation is taken from Statistical Analysis of Spherical Data, 1987 by NI Fisher, T Lewis, and BJJ Embleton, equation 4.23
+
+    Parameters
+    ----------
+    th : scalar
+      first angle for which to calculate h(theta)
+    ph : scalar
+      second angle for which to calculate h(theta)
+    a : scalar
+      first  mean angle
+    b : scalar
+      second mean angle
+    k : scalar
+      spread parameter
+    '''
+    sin, cos, pi, sinh = np.sin, np.cos, np.pi, np.sinh
+    return C_F(k) * np.exp(k * (sin(th) * sin(a) * cos(ph - b)
+                             + cos(th) * cos(a)))
+
+def vmf_pde_centered(th, k):
     '''Returns the probability density function for the
     von-Mises-Fisher function, for the 3d case, at the angle theta.
 
@@ -185,7 +415,7 @@ def vmf_pdf(theta, kappa):
     kappa : scalar
       spread parameter
     '''
-    return C_F(kappa) * np.exp(kappa * np.cos(theta))
+    return C_F(k) * np.exp(k * np.cos(th))
 
 def vmf_cdf(theta, kappa):
     '''Returns the value of the cumulative density function of the
@@ -193,7 +423,7 @@ def vmf_cdf(theta, kappa):
     theta = np.asarray(theta)
     if theta.size > 1:
         if np.rank(theta) > 1:
-            raise UserError("theta should be at most 1d.")
+            raise ValueError("theta should be at most 1d.")
         cdf_list = [quad(vmf_pdf, 0, angle, args=(kappa))[0] for angle in theta]
         cdf = np.array(cdf_list)
         return cdf
@@ -429,18 +659,22 @@ def plot_pts(pts=None, mu=None):
         mlab.quiver3d(zeros, zeros, zeros,
                       mu[0, np.newaxis], mu[1, np.newaxis], mu[2, np.newaxis])
 
-def plot_circle(mu, theta, scalars=None, scalar_max=None,
-		color=None, radius=0.01, alpha=1.,
-		resolution=50.):
-    x,y,z = 0,1,2
+def generate_cone_circle(theta, phi, angle, resolution=50.):
+    x, y, z = 0, 1, 2
     phi_prime = np.linspace(0, 2 * np.pi, resolution)
     # start with defining cone around (0,0,1)
     origin = np.array((0.,0.,1.))
-    P_j = np.array([vectors.rotate_by_angles(origin, theta, q)
+    P_j = np.array([vectors.rotate_by_angles(origin, angle, q)
                     for q in phi_prime]).T
+    return vectors.rotate_by_angles(P_j, theta, phi).T
+        
+def plot_circle(mu, angle, scalars=None, scalar_max=None,
+		color=None, radius=0.01, alpha=1.,
+		resolution=50.):
+    x, y, z = 0, 1, 2
     theta, phi = convert_cartesian_to_polar(mu)
-    P_k = vectors.rotate_by_angles(P_j, theta, phi)
-	    
+    P_k = generate_cone_circle(theta, phi, angle, resolution).T
+    
     p3d = mlab.pipeline
     if scalars == None:
 	tube = p3d.tube(p3d.line_source(P_k[x], P_k[y], P_k[z]))
@@ -452,8 +686,8 @@ def plot_circle(mu, theta, scalars=None, scalar_max=None,
 	    tube = p3d.tube(p3d.line_source(P_k[x],
 					    P_k[y],
 					    P_k[z], scalars))
-	    tube.filter.radius = radius
-	    surf = p3d.surface(tube)
+    tube.filter.radius = radius
+    surf = p3d.surface(tube)
     if color != None:
 	surf.actor.actor.property.color = color
     surf.actor.actor.property.opacity = alpha

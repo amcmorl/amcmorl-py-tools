@@ -1,4 +1,4 @@
-import numpy as _n
+import numpy as np
 from scipy.optimize import leastsq
 
 # --- double_boltzman --------------------------------------
@@ -36,10 +36,10 @@ def double_boltzman(t1, tau1, t2, tau2, height=1, \
     if r is None:
         if length is None:
             raise ValueError("One of r or length must be specified.")
-        r = _n.arange(length)
+        r = np.arange(length)
 
-    frac1denom = 1+_n.exp(-(r-t1)/tau1)
-    frac2denom = 1+_n.exp((r-t2)/tau2)
+    frac1denom = 1+np.exp(-(r-t1)/tau1)
+    frac2denom = 1+np.exp((r-t2)/tau2)
     
     return height * (1/frac1denom) * (1/frac2denom)
 
@@ -67,7 +67,7 @@ def fit_double_boltzman(data, p0=None, r=None, curve=1.):
     to 1-D data. Returns p of best fit: centre, height, width'''
 
     if r == None:
-        r = _n.arange( len( data ) )
+        r = np.arange( len( data ) )
     else:
         if len(r) != len(data):
             raise ValueError("Data and r (x-values) are not equal length.")
@@ -98,7 +98,7 @@ def double_boltzman_fwhm(centre, mult, ipd, curve, length=None, r=None, ):
     if r == None:
         if length == None:
             raise ValueError("One of r or length must be specified.")
-        r = _n.arange(length)
+        r = np.arange(length)
 
     fvals = double_boltzman_by_centre(centre, mult, ipd, curve, \
                                       length=length, r=r )    
@@ -107,7 +107,7 @@ def double_boltzman_fwhm(centre, mult, ipd, curve, length=None, r=None, ):
 
     # quick & dirty method -> fwhm = 2 * dist( centre to 1 half-max )
     diffs = abs(fvals - hmx)
-    return 2 * abs(centre - r[_n.where(diffs == diffs.min())])
+    return 2 * abs(centre - r[np.where(diffs == diffs.min())])
 
 # --- exponential decay ------------------------------------------
 
@@ -126,9 +126,9 @@ def exp_decay(a, c, length=None, r=None):
     if r is None:
         if length is None:
             raise ValueError("One of r or length must be specified.")
-        r = _n.arange(length)
+        r = np.arange(length)
 
-    return (1 - a) * _n.exp(-r/c) + a
+    return (1 - a) * np.exp(-r/c) + a
 
 def _exp_decay_erf(p, d, r):
     '''error function for exponential decay fitting
@@ -147,7 +147,7 @@ def fit_exp_decay(data, p0=None, r=None):
     to 1-D data. Returns p of best fit: asymptote, decay const.'''
 
     if r == None:
-        r = _n.arange( len( data ) )
+        r = np.arange( len( data ) )
     else:
         if len(r) != len(data):
             raise ValueError("Data and r (x-values) are not equal length.")
@@ -174,8 +174,8 @@ def exp_cdf(c, length=None, r=None):
     if r is None:
         if length is None:
             raise ValueError("One of r or length must be specified.")
-        r = _n.arange(length)
-    return 1 - _n.exp(-r/c)
+        r = np.arange(length)
+    return 1 - np.exp(-r/c)
 
 def _exp_cdf_erf(p, d, r):
     '''error function for exponential decay fitting
@@ -194,7 +194,7 @@ def fit_exp_cdf(data, p0=None, r=None):
     1-D data. Returns p of best fit.
     '''
     if r == None:
-        r = _n.arange( len( data ) )
+        r = np.arange( len( data ) )
     else:
         if len(r) != len(data):
             raise ValueError("Data and r (x-values) are not equal length.")
@@ -205,3 +205,55 @@ def fit_exp_cdf(data, p0=None, r=None):
         return lsq[0]
     else:
         return None, None   
+
+# --- cosine ------------------------------------------
+
+def _cos_cdf(a, b, c, length=None, r=None):
+    '''Returns an exponential decay function in the form
+
+    y = A \cos{x}
+
+    Parameters
+    ----------
+    length : length of 1-D array to hold
+       OR
+    r : x vals
+    '''
+    if r is None:
+        if length is None:
+            raise ValueError("One of r or length must be specified.")
+        r = np.arange(length)
+    return a * np.cos(b * r) + c
+    
+def _cos_cdf_erf(p, d, r):
+    '''Error function for cosine fitting
+    returns residuals: data - cosine
+
+    Parameters
+    ----------
+    p : sequence, (3,)
+      fitting parameters (p) are:
+        a = magnitude
+        b = x-scale
+        c = decay constant
+    '''
+    a, b, c = p
+    f = _cos_cdf(a, b, c, r=r)
+    return d - f
+
+def fit_cos_cdf(data, p0=None, r=None):
+    '''Fits (using scipy.optimize.leastsq) a cosine cdf function to
+    1-D data. Returns parameters of best fit.
+    '''
+    if r == None:
+        r = np.arange( len( data ) )
+    else:
+        if len(r) != len(data):
+            raise ValueError("Data and r (x-values) are not equal length.")
+    if p0 == None:
+        p0 = (1., 1., 0.)
+    lsq = leastsq(_cos_cdf_erf, p0, args=(data, r))
+    if lsq[-1] in range(1,5):
+        return lsq[0]
+    else:
+        return None, None

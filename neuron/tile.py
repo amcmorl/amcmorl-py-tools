@@ -6,7 +6,8 @@ import ncdf
 from glob import glob
 from rebin import congrid
 import numpy as n
-posmods = ['pynetcdf', 'Scientific.IO.NetCDF', 'Scientific_NetCDF']
+posmods = ['pupynere', 'pynetcdf',
+           'Scientific.IO.NetCDF', 'Scientific_NetCDF']
 tried = 0
 for mod in posmods:
     try:
