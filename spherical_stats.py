@@ -158,7 +158,7 @@ class Lambertograph(object):
         phi = (np.pi - phi) % (2 * np.pi)
         return theta, phi
         
-    def plot_xy(self, X, Y, Z, inc_color=True):
+    def plot_xy(self, X, Y, Z, color='next', inc_color=True):
         if Z > 0:
             # need to flip hemisphere over and change axes accordingly
             ax = self.ax_top
@@ -167,27 +167,35 @@ class Lambertograph(object):
         else:
             ax = self.ax_bot
 
+        if color == 'next':
+            color = self.next_colour(inc=inc_color)
+            
         x, y = X * np.sqrt(2/(1. - Z)), Y * np.sqrt(2/(1. - Z))
         rho, psi = cart_to_polar_2d(x, y)
-        ax.plot((psi,), (rho,), 'o', color=self.next_colour())
+        ax.plot((psi,), (rho,), 'o', color=color)
         if rho.max() > self.theory_rmax:
             print "Range warning."
         plt.draw()
         
-    def plot_polar(self, theta, phi, inc_color=True):
+    def plot_polar(self, theta, phi, color='next', inc_color=True):
         if theta < np.pi/2.:
             # flip hemisphere
             ax = self.ax_top
             theta, phi = self.flip_hemisphere_polar((theta, phi))
         else:
             ax = self.ax_bot
+
+        if color == 'next':
+            color=self.next_colour()
+            
         rho, psi = self.project_polar((theta, phi))
-        ax.plot((psi,), (rho,), 'o', color=self.next_colour())
+        ax.plot((psi,), (rho,), 'o', color=color)
         if rho.max() > self.theory_rmax:
             print "Range warning."
         plt.draw()
 
-    def plot_circle(self, theta, phi, angle, resolution=100., inc_color=True):
+    def plot_circle(self, theta, phi, angle, resolution=100.,
+                    color='next', inc_color=True):
         # calculate points in circle, in X,Y,Z
         x, y, z = 0, 1, 2
         rho, psi = 0, 1
@@ -199,6 +207,10 @@ class Lambertograph(object):
             symbol = '--'
         else:
             symbol = '-'
+
+        if color == 'next':
+            color = self.next_colour(inc=inc_color)
+            
         # divide circle points into each hemisphere
         top_hemisphere = P_c[..., z] >= 0
         bot_hemisphere = P_c[..., z] <= 0
@@ -215,8 +227,7 @@ class Lambertograph(object):
             Q_p = np.apply_along_axis(self.project_polar, 1, P_flipped)
             #if np.diff(Q_p[..., psi])[0] > 0.:
             #    Q_p = Q_p[::-1]
-            self.ax_top.plot(Q_p[..., psi], Q_p[..., rho], symbol,
-                             color=self.next_colour(inc=inc_color))
+            self.ax_top.plot(Q_p[..., psi], Q_p[..., rho], symbol, color=color)
             
         elif np.all(bot_hemisphere):
             # bottom only
@@ -224,8 +235,7 @@ class Lambertograph(object):
             Q_p = np.apply_along_axis(self.project_polar, 1,
                                       P_p % (2 * np.pi))
 
-            self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho], symbol,
-                             color=self.next_colour(inc=inc_color))
+            self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho], symbol, color=color)
             plt.draw()
             #return P_c, P_p, Q_p
         
@@ -252,10 +262,8 @@ class Lambertograph(object):
                                         P_bot)
 
             # plot each set of points
-            self.ax_top.plot(Q_top[..., psi], Q_top[..., rho], symbol,
-                             color=self.next_colour(inc=inc_color))
-            self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho], symbol,
-                             color=self.next_colour(inc=inc_color))
+            self.ax_top.plot(Q_top[..., psi], Q_top[..., rho], symbol, color=color)
+            self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho], symbol, color=color)
             plt.draw()
             #return P_c, P_p, P_top, P_bot, Q_top, Q_bot
 
