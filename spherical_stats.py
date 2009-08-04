@@ -116,9 +116,9 @@ def cart_to_polar_2d(rho, psi):
 class Lambertograph(object):
     '''A stereographic plot of a sphere on to a 2d plane'''
     
-    def __init__(self, cmap=mpl.cm.Blues, n_items=None):
+    def __init__(self, cmap=mpl.cm.Blues, n_items=None, fig_num=None):
         self.theory_rmax = np.sqrt(2.)
-        self.figure = plt.figure(figsize=(8,4))
+        self.figure = plt.figure(num=fig_num, figsize=(8,4))
         self.ax_top = self.figure.add_subplot(121, projection='polar',
                                               resolution=1)
         self.ax_top.set_thetagrids([])
@@ -200,7 +200,7 @@ class Lambertograph(object):
         x, y, z = 0, 1, 2
         rho, psi = 0, 1
         P_c = generate_cone_circle(theta, phi, angle)
-        P_c = P_c # [:-1]
+        #P_c = P_c # [:-1]
 
         if angle > np.pi/2.:
             print "!",
