@@ -1,12 +1,12 @@
 import numpy as np
 
-def multiregress(xs, y):
+def multiregress(xs, y, with_err=True):
     '''Multiple linear regression with statistics.
     
-    Calculates the partial regression co-efficients b_{1..k} in the
+    Calculates the partial regression co-efficients b_{0..k} in the
     equation Y = b_0 + b_1.x_1 + b_2.x_2 + ... + b_k.x_k
 
-    Returns the standard errors of the regression coefficients:
+    Optionally returns the standard errors of the regression coefficients:
     s_{bY1}, s_{bY2}, as described in Biometry, Sokal and Rohlf, 3rd Ed.,
     box 16.2.
 
@@ -28,10 +28,11 @@ def multiregress(xs, y):
     n, k = xs.shape
     xs_c = np.concatenate((np.ones((n,1)), xs), axis=1)
     b, resid, rank, s = np.linalg.lstsq(xs_c, y)
-    # resid is the 'unexplained sum-of-squares', a scalar
-    s_y = np.sqrt(resid / (n - k - 1.)) # unexplained SD
-    G_mult = np.linalg.inv( np.cov( xs.T ) * (n - 1) )
-    se = s_y * np.sqrt(G_mult[np.eye(k, dtype=bool)])
-    #assert(se[0] == se[1])
-    # assert is that se(x) == se(y) which is true when directions are symmetrical
-    return b, se
+    if with_err:
+        # resid is the 'unexplained sum-of-squares', a scalar
+        s_y = np.sqrt(resid / (n - k - 1.)) # unexplained SD
+        G_mult = np.linalg.inv( np.cov( xs.T ) * (n - 1) )
+        se = s_y * np.sqrt(G_mult[np.eye(k, dtype=bool)])
+        return b, se
+    else:
+        return b
