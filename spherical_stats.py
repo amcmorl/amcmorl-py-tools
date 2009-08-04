@@ -84,8 +84,7 @@ def convert_cartesian_to_polar(vector):
     return theta, phi
 
 # --------------------------- spherical geometry  ----------------------------
-
-def polar_to_cart_2d(x, y):
+def cart_to_polar_2d(x, y):
     '''
     Parameters
     ----------
@@ -94,12 +93,13 @@ def polar_to_cart_2d(x, y):
     Returns
     -------
     psi, rho : scalars
+      psi angle, and rho radius
     '''
     rho = np.sqrt(x**2 + y**2)
     psi = np.arctan2(y, x)
     return rho, psi
 
-def cart_to_polar_2d(rho, psi):
+def polar_to_cart_2d(rho, psi):
     '''
     Parameters
     ----------

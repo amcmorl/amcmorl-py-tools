@@ -1,8 +1,8 @@
 import numpy as np
 #from numpy.linalg import norm
 
-def norm(vec):
-    return np.sqrt(np.sum(vec**2))
+def norm(vec, axis=None):
+    return np.sqrt(np.sum(vec**2, axis=axis))
 
 def perpz(vec):
     '''returns the unit length vector perpendicular
