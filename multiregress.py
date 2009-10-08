@@ -1,6 +1,6 @@
 import numpy as np
 
-def multiregress(xs, y, with_err=True):
+def multiregress(xs, y, with_err=True, add_const=True):
     '''Multiple linear regression with statistics.
     
     Calculates the partial regression co-efficients b_{0..k} in the
@@ -15,7 +15,11 @@ def multiregress(xs, y, with_err=True):
     xs : array, shape (n, k)
         n is number of observations, k is number of variates, 
     y : array, shape (n,)
-
+    with_err : bool
+        calculate standard errors of regression coefficients
+    add_const : bool
+        include constant term in regression
+    
     Returns
     -------
     b : array, shape (k + 1)
@@ -26,7 +30,10 @@ def multiregress(xs, y, with_err=True):
     '''
     # add ones for linear regression
     n, k = xs.shape
-    xs_c = np.concatenate((np.ones((n,1)), xs), axis=1)
+    if add_const:
+        xs_c = np.concatenate((np.ones((n,1)), xs), axis=1)
+    else:
+        xs_c = xs
     b, resid, rank, s = np.linalg.lstsq(xs_c, y)
     if with_err:
         # resid is the 'unexplained sum-of-squares', a scalar
@@ -36,3 +43,18 @@ def multiregress(xs, y, with_err=True):
         return b, se
     else:
         return b
+
+def rsq(x, y, add_const=True):
+    # calculate regression coefficients
+    b = multiregress(x, y, with_err=False, add_const=add_const)
+    b_nc = b[1:] # ignore constant term
+    
+    # standardize partial regression coefficients
+    s_y = np.std(y, ddof=1)
+    s_x = np.std(x, ddof=1, axis=0)    
+    b_prime = b_nc * s_x / s_y
+
+    # calculate correlation coefficients
+    r_xy = np.corrcoef(y.T, x.T)[0,1:]
+    rsq = np.sum(r_xy * b_prime)
+    return rsq

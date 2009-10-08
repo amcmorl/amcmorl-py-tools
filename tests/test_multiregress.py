@@ -1,10 +1,8 @@
-import scipy.io
-import multiregress
+import numpy as np
+from multiregress import *
 
 def test_multiregress():
-    data = scipy.io.read_array('/home/amcmorl/lib/biometry/'.\
-                               'box16.1_air_pollution.txt',
-                               columns=(1,-1))
+    data = np.loadtxt('box16.1_air_pollution.txt', usecols=range(1,8))
     Y = data[...,0]
     X = data[...,1:3]
     coefs, ses = multiregress(X,Y)
@@ -13,3 +11,13 @@ def test_multiregress():
     supplied_ses = np.array((0.37327, 0.0047880))
     assert np.all((ses - supplied_ses) < 1e-4)
     print "multiregress ok"
+
+def test_rsq():
+    data = np.loadtxt('box16.1_air_pollution.txt', usecols=range(1,8))
+    Y = data[:,0]
+    X = data[:,1:3]
+    print X.shape, Y.shape
+    calc_rsq = rsq(X, Y)
+    supplied_rsq = 0.5162
+    assert np.abs(calc_rsq - supplied_rsq) < 0.5162
+    print 'rsq okay'
