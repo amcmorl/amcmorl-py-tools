@@ -68,7 +68,7 @@ def rotate_about_origin_3d(vector, normal, theta):
          + ln * (-v*x + u*y) * sin(theta)) / lns \
         ))
 
-def rotate_by_angles(vector, theta, phi):
+def rotate_by_angles(vector, theta, phi, reverse_order=False):
     '''Gives vector after rotation about theta, phi.
 
     Parameters
@@ -79,16 +79,27 @@ def rotate_by_angles(vector, theta, phi):
       angle of rotation to z axis
     phi : scalar
       angle of rotation in x-y plane, CCW from x axis
+    reverse_order : bool
+      perform the phi rotation first? Normally, theta rotation is first.
+      
 
     Returns
     -------
     rotated vector : array_like, shape (3,)
       axial components of rotated vector
+
+    Notes
+    -----
+    Theta and phi are relative to (0,0,1).
+    This performs two rotations:
+      theta, about the y-axis; followed by phi, about the z-axis.
       '''
     cos, sin = np.cos, np.sin
     t, ph = theta, phi
-    A = np.array(([cos(t) * cos(ph), cos(t) * sin(ph), -sin(t)], \
-                  [-sin(ph),         cos(ph),          0], \
-                  [sin(t) * cos(ph), sin(t) * sin(ph), cos(t)])).T
+    A = np.array(([cos(t) * cos(ph), cos(t) * sin(ph), -sin(t)],
+                  [-sin(ph),         cos(ph),          0],
+                  [sin(t) * cos(ph), sin(t) * sin(ph), cos(t)]))
+    if not reverse_order:
+        A = A.T
     return np.dot(A, vector)
 
