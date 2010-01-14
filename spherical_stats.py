@@ -203,7 +203,6 @@ class Lambertograph(object):
         #P_c = P_c # [:-1]
 
         if angle > np.pi/2.:
-            print "!",
             symbol = '--'
         else:
             symbol = '-'
