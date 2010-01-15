@@ -226,7 +226,8 @@ class Lambertograph(object):
             Q_p = np.apply_along_axis(self.project_polar, 1, P_flipped)
             #if np.diff(Q_p[..., psi])[0] > 0.:
             #    Q_p = Q_p[::-1]
-            self.ax_top.plot(Q_p[..., psi], Q_p[..., rho], symbol, color=color)
+            self.ax_top.plot(Q_p[..., psi], Q_p[..., rho],
+                             symbol, color=color, zorder=0)
             
         elif np.all(bot_hemisphere):
             # bottom only
@@ -234,7 +235,8 @@ class Lambertograph(object):
             Q_p = np.apply_along_axis(self.project_polar, 1,
                                       P_p % (2 * np.pi))
 
-            self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho], symbol, color=color)
+            self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho],
+                             symbol, color=color, zorder=0)
             plt.draw()
             #return P_c, P_p, Q_p
         
@@ -261,8 +263,10 @@ class Lambertograph(object):
                                         P_bot)
 
             # plot each set of points
-            self.ax_top.plot(Q_top[..., psi], Q_top[..., rho], symbol, color=color)
-            self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho], symbol, color=color)
+            self.ax_top.plot(Q_top[..., psi], Q_top[..., rho],
+                             symbol, color=color, zorder=0)
+            self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho],
+                             symbol, color=color, zorder=0)
             plt.draw()
             #return P_c, P_p, P_top, P_bot, Q_top, Q_bot
 

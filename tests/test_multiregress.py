@@ -1,8 +1,12 @@
 import numpy as np
 from multiregress import *
 
+
+test_dir = '/home/amcmorl/lib/python-lib/tests/'
+
 def test_multiregress():
-    data = np.loadtxt('box16.1_air_pollution.txt', usecols=range(1,8))
+    data = np.loadtxt(test_dir + 'box16.1_air_pollution.txt',
+                      usecols=range(1,8))
     Y = data[...,0]
     X = data[...,1:3]
     coefs, ses = multiregress(X,Y)
@@ -13,7 +17,8 @@ def test_multiregress():
     print "multiregress ok"
 
 def test_rsq():
-    data = np.loadtxt('box16.1_air_pollution.txt', usecols=range(1,8))
+    data = np.loadtxt(test_dir + 'box16.1_air_pollution.txt',
+                      usecols=range(1,8))
     Y = data[:,0]
     X = data[:,1:3]
     print X.shape, Y.shape

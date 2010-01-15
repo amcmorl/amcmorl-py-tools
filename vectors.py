@@ -68,7 +68,7 @@ def rotate_about_origin_3d(vector, normal, theta):
          + ln * (-v*x + u*y) * sin(theta)) / lns \
         ))
 
-def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=True):
+def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=False):
     '''Gives vector after rotation about theta, phi.
 
     Parameters
@@ -81,8 +81,6 @@ def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=True):
       angle of rotation in x-y plane, CCW from x axis
     reverse_order : bool
       perform the phi rotation first? Normally, theta rotation is first.
-    fix_len : bool
-      correct vector to unit length, defaults to True
 
     Returns
     -------
@@ -102,9 +100,5 @@ def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=True):
                   [sin(t) * cos(ph), sin(t) * sin(ph), cos(t)]))
     if not reverse_order:
         A = A.T
-    vec = np.dot(A, vector)
-    if fixlen:
-        return vec / np.linalg.norm(vec)
-    else:
-        return vec
+    return np.dot(A, vector)
 

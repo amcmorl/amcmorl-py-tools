@@ -56,9 +56,10 @@ def test_estimate_kappa():
     for mu, kappa in zip(mus, kappas):
         n_pts = int(1e4)
         tolerance = 0.1
-        # acceptable deviation between set kappa (hopefully), and estimated kappa.
-        # Could really do with a way to define a set of points with an established
-        # kappa.
+        # acceptable deviation between set kappa (hopefully),
+        # and estimated kappa.
+        # Could really do with a way to define a
+        # set of points with an established kappa.
         P_i = vmf_rvs(mu, kappa, n_pts)
         khat = estimate_kappa(P_i, mu=mu)
         diff = np.abs(khat - kappa)
