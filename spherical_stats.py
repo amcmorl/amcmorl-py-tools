@@ -177,7 +177,7 @@ class Lambertograph(object):
             print "Range warning."
         plt.draw()
         
-    def plot_polar(self, theta, phi, color='next', inc_color=True):
+    def plot_polar(self, theta, phi, color='next', inc_color=True, symbol='o'):
         if theta < np.pi/2.:
             # flip hemisphere
             ax = self.ax_top
@@ -189,7 +189,7 @@ class Lambertograph(object):
             color=self.next_colour()
             
         rho, psi = self.project_polar((theta, phi))
-        ax.plot((psi,), (rho,), 'o', color=color)
+        ax.plot((psi,), (rho,), symbol, color=color)
         if rho.max() > self.theory_rmax:
             print "Range warning."
         plt.draw()
