@@ -58,3 +58,17 @@ def rsq(x, y, add_const=True):
     r_xy = np.corrcoef(y.T, x.T)[0,1:]
     rsq = np.sum(r_xy * b_prime)
     return rsq
+
+def rsq_from_b(x, y, b, add_const=True):
+    '''calculate r-squared value without recalculating regression.'''
+    b_nc = b[1:]
+    # standardize partial regression coefficients
+    s_y = np.std(y, ddof=1)
+    s_x = np.std(x, ddof=1, axis=0)    
+    b_prime = b_nc * s_x / s_y
+
+    # calculate correlation coefficients
+    r_xy = np.corrcoef(y.T, x.T)[0,1:]
+    rsq = np.sum(r_xy * b_prime)
+    return rsq
+    

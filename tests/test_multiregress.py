@@ -1,7 +1,6 @@
 import numpy as np
 from multiregress import *
 
-
 test_dir = '/home/amcmorl/lib/python-lib/tests/'
 
 def test_multiregress():
@@ -26,3 +25,14 @@ def test_rsq():
     supplied_rsq = 0.5162
     assert np.abs(calc_rsq - supplied_rsq) < 0.5162
     print 'rsq okay'
+
+def test_rsq_from_b():
+    data = np.loadtxt(test_dir + 'box16.1_air_pollution.txt',
+                      usecols=range(1,8))
+    Y = data[:,0]
+    X = data[:,1:3]
+    b = multiregress(X,Y)
+    calc_rsq = rsq_from_b(X, Y, b)
+    supplied_rsq = 0.5162
+    assert np.abs(calc_rsq - supplied_rsq) < 0.5162
+    print 'rsq_from_coeffs okay'
