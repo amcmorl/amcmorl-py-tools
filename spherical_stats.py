@@ -167,6 +167,31 @@ def convert_cartesian_to_polar(vector):
     '''
     x,y,z = vector
 
+    theta = np.arccos(z)
+    if np.allclose(theta, 0):
+        # theta should be of size 1, but allclose handles masked values better
+        # vector points straight up, phi is irrelevant,
+        #... automatically define as 0
+        phi = 0
+    else:
+        phi = np.arctan2(y,x)
+    return theta, phi
+
+def convert_cartesian_to_polar_ma(vector):
+    '''Convert a vector into two angles
+
+    Parameters
+    ----------
+    mu : array_like, shape (3,)
+      x,y,z components of vector
+
+    Returns
+    -------
+    theta : scalar
+    phi : scalar
+    '''
+    x,y,z = vector
+
     theta = np.ma.arccos(z)
     if np.allclose(theta, 0):
         # theta should be of size 1, but allclose handles masked values better
@@ -178,6 +203,7 @@ def convert_cartesian_to_polar(vector):
             phi = np.ma.array(0., mask=True)
     else:
         phi = np.ma.arctan2(y,x)
+
         
 #     if type(theta) == np.ma.MaskedArray:
 #         if theta.mask:
@@ -224,15 +250,24 @@ def polar_to_cart_2d(rho, psi):
 class Lambertograph(object):
     '''A stereographic plot of a sphere on to a 2d plane'''
     
-    def __init__(self, cmap=mpl.cm.Blues, n_items=None, fig_num=None):
+    def __init__(self, cmap=mpl.cm.Blues, n_items=None, fig=None,
+                 fig_num=None, panel_positions=[121, 122]):
         self.theory_rmax = np.sqrt(2.)
-        self.figure = plt.figure(num=fig_num, figsize=(8,4))
-        self.ax_top = self.figure.add_subplot(121, projection='polar',
-                                              resolution=1)
+        if fig == None:
+            self.figure = plt.figure(num=fig_num, figsize=(8,4))
+        else:
+            self.figure = fig
+        if type(panel_positions[0]) == int:
+            fn = self.figure.add_subplot
+        else:
+            fn = self.figure.add_axes
+        self.ax_top = fn(panel_positions[0], projection='polar',
+                         resolution=1)
+
         self.ax_top.set_thetagrids([])
         self.ax_top.set_rticks([])
-        self.ax_bot = self.figure.add_subplot(122, projection='polar',
-                                              resolution=1)
+        self.ax_bot = fn(panel_positions[1], projection='polar',
+                         resolution=1)
         self.ax_bot.set_thetagrids([])
         self.ax_bot.set_rticks([])
         self.scale_axes()
@@ -252,6 +287,14 @@ class Lambertograph(object):
             if inc:
                 self.i_item += 1
             return next_colour
+
+    def get_colours(self, n):
+        if self.n_items == None:
+            return self.cmap(0)
+        else:
+            c_ind = np.linspace(0, 255 * (n / self.n_items), n)
+            next_colours = self.cmap(np.round(c_ind).astype(int))
+        return next_colours
         
     def project_polar(self, polar_coords):
         theta, phi = polar_coords
@@ -265,7 +308,7 @@ class Lambertograph(object):
         # flip phi
         phi = (np.pi - phi) % (2 * np.pi)
         return theta, phi
-        
+    
     def plot_xy(self, X, Y, Z, color='next', inc_color=True):
         if Z > 0:
             # need to flip hemisphere over and change axes accordingly
@@ -302,6 +345,37 @@ class Lambertograph(object):
             print "Range warning."
         plt.draw()
 
+    def plot_polar2(self, theta, phi, color='next',
+                    inc_color=True, symbol='o'):
+        tops = theta < np.pi/2.
+        bottoms = ~tops
+
+        if color == 'next':
+            color=self.get_colours(theta.shape[0])
+
+        if np.any(tops):
+            # plot tops
+            # flip hemisphere
+            theta_t, phi_t = \
+                self.flip_hemisphere_polar((theta[tops], phi[tops]))
+            rho, psi = self.project_polar((theta_t, phi_t))
+            self.ax_top.scatter(psi, rho, edgecolors='k', color=color,
+                                linewidths=.5)
+
+        if np.any(bottoms):
+            # plot bottoms
+            rho, psi = self.project_polar((theta[bottoms], phi[bottoms]))
+            self.ax_bot.scatter(psi, rho, marker='o',
+                                edgecolors='k', color=color,
+                                linewidths=.5)
+
+        #will have to keep a list of colours assigned earlier, and then
+        #select from it when drawing
+            
+        if rho.max() > self.theory_rmax:
+            print "Range warning."
+        plt.draw()
+        
     def plot_circle(self, theta, phi, angle, resolution=100.,
                     color='next', inc_color=True):
         # calculate points in circle, in X,Y,Z
