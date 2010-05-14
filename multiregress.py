@@ -59,7 +59,7 @@ def rsq(x, y, add_const=True):
     rsq = np.sum(r_xy * b_prime)
     return rsq
 
-def rsq_from_b(x, y, b, add_const=True):
+def rsq_from_b(x, y, b):
     '''calculate r-squared value without recalculating regression.'''
     b_nc = b[1:]
     # standardize partial regression coefficients
