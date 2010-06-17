@@ -59,8 +59,18 @@ def rsq(x, y, add_const=True):
     rsq = np.sum(r_xy * b_prime)
     return rsq
 
-def rsq_from_b(x, y, b, add_const=True):
-    '''calculate r-squared value without recalculating regression.'''
+def rsq_from_b(x, y, b):
+    '''Calculate r-squared value without recalculating regression.
+
+    Parameters
+    ----------
+    x : array
+      dependent variables in regression, shape=(m,n)
+    y : array
+      independent variables in regression, shape=(m,)
+    b : array
+      regression coefficients, shape=(n,)
+    '''
     b_nc = b[1:]
     # standardize partial regression coefficients
     s_y = np.std(y, ddof=1)
@@ -71,4 +81,3 @@ def rsq_from_b(x, y, b, add_const=True):
     r_xy = np.corrcoef(y.T, x.T)[0,1:]
     rsq = np.sum(r_xy * b_prime)
     return rsq
-    
