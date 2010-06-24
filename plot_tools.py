@@ -10,65 +10,103 @@ class Margins:
         self.hgap = hgap
         self.vgap = vgap
 
-def get_ax_rect(i_ax, n_cols, n_rows, margin=Margins(), order='across-first'):
+def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), order='across-first'):
     '''Calculate rect values for axis.
     '''
     i_axs = np.array(i_ax)
-    axs = get_ax_rect(i_axs, n_cols, n_rows, margin=margin, order=order)
+    axs = get_ax_rect(i_axs, ncols, nrows, margin=margin, order=order)
     return axs[0]
-        
-def get_ax_rects(i_axs, n_cols, n_rows, margin=Margins(), order='across-first'):
+
+def get_col_row(i, ncols, nrows, order):
+    if order == 'across-first':
+        ncol = i % ncols
+        nrow = i / ncols
+    if order == 'down-first':
+        ncol = i / nrows
+        nrow = i % nrows
+    return ncol, nrow
+
+def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), order='across-first'):
     '''Calculate rect values for several axes.
     '''
     i_axs = np.asarray(i_axs)    
     assert order in ['across-first', 'down-first']
     w = (1 - (margin.left + margin.right + \
-                  (n_cols - 1) * margin.hgap)) / float(n_cols)
+                  (ncols - 1) * margin.hgap)) / float(ncols)
     h = (1 - (margin.bottom + margin.top + \
-                  (n_rows - 1) * margin.vgap)) / float(n_rows)
-    if order == 'across-first':
-        n_col = i_axs % n_cols
-        n_row = i_axs / n_cols
-    if order == 'down-first':
-        n_col = i_axs / n_rows
-        n_row = i_axs % n_rows
-    l = margin.left + n_col * (w + margin.hgap)
-    b = margin.bottom + (n_rows - n_row - 1) * (h + margin.vgap)
+                  (nrows - 1) * margin.vgap)) / float(nrows)
+    ncol, nrow = get_col_row(i_axs, ncols, nrows, order)
+    l = margin.left + ncol * (w + margin.hgap)
+    b = margin.bottom + (nrows - nrow - 1) * (h + margin.vgap)
     ax_rects = np.vstack((l, b, np.ones_like(l) * w, np.ones_like(b) * h))
     return ax_rects.T
 
-def create_plot_grid(n_axes, n_cols=1, margin=Margins(), fig=None,
-                     order='across-first' ):
+def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
+                     order='across-first', sharex='none',
+                     yspines='left', xspines='bottom'):
     '''Create a grid of axes for suitable for plots.
 
     Parameters
     ----------
-    n_axes, n_cols : int
+    n_axes, ncols : int
       number of axes and columns
     margin : Margins instance
     fig : mpl figure
       figure to use; if None, creates a new figure
     order : {'across-first', 'down-first'}
       numbering order for plots
-
+    sharex : {'col', 'row', 'all', 'none'}
+      how, if at all, to share x axes
+    yspines : {'left', 'all'}
+      where to draw y spines, relative to grid, 'all' means on all columns
+    xspines : {'bottom', 'all'}
+      where to draw x spines, relative to grid, 'all' mean on all rows
+      
     Returns
     -------
     axes : list of mpl Axes objects
     '''
-    n_rows = n_axes / n_cols if n_axes % n_cols == 0 \
-        else n_axes / n_cols + 1
+    assert(order in ['across-first', 'down-first'])
+    assert(sharex in ['col', 'row', 'all', 'none'])
+    assert(yspines in ['left', 'all'])
+    assert(xspines in ['bottom', 'all'])
+    
+    nrows = n_axes / ncols if n_axes % ncols == 0 \
+        else n_axes / ncols + 1
     axes = []
     i_axs = np.arange(n_axes)
-    axrects = get_ax_rects(i_axs, n_cols, n_rows, margin=margin, order=order)
+    axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin, order=order)
     if fig == None:
         fig = plt.figure()
-    for axrect in axrects:
-        ax = fig.add_axes(axrect)
+    col_leader = None
+    for i, axrect in enumerate(axrects):
+        ncol, nrow = get_col_row(i, ncols, nrows, order)
+        if sharex == 'col':
+            if (nrow == 0) and (ncol > 0):
+                # reset at the top of new columns
+                col_leader = None
+        ax = fig.add_axes(axrect, sharex=col_leader)
+
+        # axis sharing
+        if sharex == 'col':
+            if nrow == 0:
+                col_leader = ax
+        elif sharex == 'all':
+            if (nrow == 0) and (ncol == 0):
+                col_leader = ax
+
+        # spines
         which = []
-        if n_col == 0:
+        if yspines == 'left':
+            if ncol == 0:
+                which.append('left')
+        elif yspines == 'all':
             which.append('left')
-        if n_row == (n_rows - 1):
+        if xspines == 'all':
             which.append('bottom')
+        elif xspines == 'bottom':
+            if nrow == (nrows - 1):
+                which.append('bottom')
         format_spines(ax, which)
         axes.append(ax)
     return axes
