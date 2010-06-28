@@ -72,6 +72,7 @@ def accepts(*types, **kw):
                         raise TypeError, msg
                 return f(*args)
             newf.__name__ = f.__name__
+            newf.__doc__ = f.__doc__
             return newf
         return decorator
     except KeyError, key:
