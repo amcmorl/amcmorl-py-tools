@@ -377,7 +377,7 @@ class Lambertograph(object):
         plt.draw()
         
     def plot_circle(self, theta, phi, angle, resolution=100.,
-                    color='next', inc_color=True):
+                    color='next', inc_color=True, **kwargs):
         # calculate points in circle, in X,Y,Z
         x, y, z = 0, 1, 2
         rho, psi = 0, 1
@@ -408,8 +408,8 @@ class Lambertograph(object):
             Q_p = np.apply_along_axis(self.project_polar, 1, P_flipped)
             #if np.diff(Q_p[..., psi])[0] > 0.:
             #    Q_p = Q_p[::-1]
-            self.ax_top.plot(Q_p[..., psi], Q_p[..., rho],
-                             symbol, color=color, zorder=0)
+            line = self.ax_top.plot(Q_p[..., psi], Q_p[..., rho],
+                                    symbol, color=color, zorder=0, **kwargs)
             
         elif np.all(bot_hemisphere):
             # bottom only
@@ -417,9 +417,8 @@ class Lambertograph(object):
             Q_p = np.apply_along_axis(self.project_polar, 1,
                                       P_p % (2 * np.pi))
 
-            self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho],
-                             symbol, color=color, zorder=0)
-            plt.draw()
+            line = self.ax_bot.plot(Q_p[..., psi], Q_p[..., rho],
+                                    symbol, color=color, zorder=0, **kwargs)
             #return P_c, P_p, Q_p
         
         else:
@@ -446,11 +445,12 @@ class Lambertograph(object):
 
             # plot each set of points
             self.ax_top.plot(Q_top[..., psi], Q_top[..., rho],
-                             symbol, color=color, zorder=0)
-            self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho],
-                             symbol, color=color, zorder=0)
-            plt.draw()
-            #return P_c, P_p, P_top, P_bot, Q_top, Q_bot
+                             symbol, color=color, zorder=0, **kwargs)
+            line = self.ax_bot.plot(Q_bot[..., psi], Q_bot[..., rho],
+                                    symbol, color=color, zorder=0, **kwargs)
+        plt.draw()
+        return line
+        #return P_c, P_p, P_top, P_bot, Q_top, Q_bot
 
     def scale_axes(self):
         self.ax_top.set_rmax(np.sqrt(2.))
