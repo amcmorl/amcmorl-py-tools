@@ -69,7 +69,7 @@ def fast_hist(values, bins=10, range=None):
         '''
     int lb, rb;
 
-    if (values(0) > bins(0)) {
+    if (values(0) >= bins(0)) {
         rb = 0;
     } else {
         lb = 0;
@@ -85,15 +85,19 @@ def fast_hist(values, bins=10, range=None):
 
     // Sweep through the values, counting, until they get too big
     lb = 0;
-    while ((rb < nvalues) && (values(rb) < bins(nbins - 1))) {
+    while ((rb < nvalues) && (values(rb) < bins(nbins-1))) {
         // Advance the edge caret until the current value is in the current bin
-        while (bins(lb+1) < values(rb)) {
+        while (bins(lb+1) <= values(rb)) {
             lb++;
         }
         // Increment the current bin
         count(lb)++;
         // Increment the value caret
         rb++;
+    }
+    // Make last bin closed on RHS, i.e. include last value if equal
+    if (bins(nbins-1) == values(rb)) {
+        count(nbins-2)++;
     }
     '''
     weave.inline(code, ['count', 'values', 'bins', 'nvalues', 'nbins'],
