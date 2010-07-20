@@ -52,6 +52,7 @@ def convert_polar_to_cartesian(theta, phi):
     vector : array, shape (3,)
       x,y,z co-ordinates of equivalent vector
     '''
+    raise(DeprecationWarning("Use spherical.pol2cart instead.")
     sin, cos = np.sin, np.cos
     x = sin(theta) * cos(phi)
     y = sin(theta) * sin(phi)
@@ -165,6 +166,7 @@ def convert_cartesian_to_polar(vector):
     theta : scalar
     phi : scalar
     '''
+    raise(DeprecationWarning("Use spherical.cart2pol instead.")
     x,y,z = vector
 
     theta = np.arccos(z)
@@ -190,6 +192,7 @@ def convert_cartesian_to_polar_ma(vector):
     theta : scalar
     phi : scalar
     '''
+    raise(DeprecationWarning("Use spherical.cart2pol instead.")
     x,y,z = vector
 
     theta = np.ma.arccos(z)
@@ -218,6 +221,7 @@ def convert_cartesian_to_polar_ma(vector):
     return theta, phi
 
 # --------------------------- spherical geometry  ----------------------------
+
 def cart_to_polar_2d(x, y):
     '''
     Parameters
@@ -465,7 +469,8 @@ class Lambertograph(object):
         self.figure.savefig(filename)
         
 def parameterized_circle_3d(t, a, b, c):
-    '''Returns a point on a circle defined by two points on the circle, its center, and the angle around the circle from the first point.
+    '''Returns a point on a circle defined by two points on the circle, its
+    center, and the angle around the circle from the first point.
 
     Parameters
     ----------
