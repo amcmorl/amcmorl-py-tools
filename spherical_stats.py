@@ -1,11 +1,12 @@
 import numpy as np
 import point_primitives
 import scipy.optimize as opt
-import vectors
+from vectors import rotate_by_angles, norm
 from enthought.mayavi import mlab
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from warnings import warn
 
 ''' Naming and angle conventions:
 
@@ -39,6 +40,26 @@ import matplotlib as mpl
             in x-y plane, 0 -- 2 * pi
 '''
 
+def uniform_rvs_polar(size=1):
+    '''
+    Notes
+    -----
+    Tested visually.
+    '''
+    u, v = np.squeeze(np.random.uniform(size=(2, size)))
+    phi = 2 * np.pi * u
+    theta = np.arccos(2 * v - 1)
+    return np.array([theta, phi])
+
+def uniform_rvs_cart(size=1):
+    '''
+    Notes
+    -----
+    Tested visually.
+    '''
+    xyz = np.random.normal(size=(3,size))
+    return xyz / norm(xyz,axis=0)[None]
+
 def convert_polar_to_cartesian(theta, phi):
     '''Convert a point described by two angles to Cartesian co-ordinates.
 
@@ -50,9 +71,9 @@ def convert_polar_to_cartesian(theta, phi):
     Returns
     -------
     vector : array, shape (3,)
-      x,y,z co-ordinates of equivalent vector
+        x,y,z co-ordinates of equivalent vector
     '''
-    raise(DeprecationWarning("Use spherical.pol2cart instead.")
+    warn("Use spherical.pol2cart instead.", DeprecationWarning, stacklevel=2)
     sin, cos = np.sin, np.cos
     x = sin(theta) * cos(phi)
     y = sin(theta) * sin(phi)
@@ -166,9 +187,9 @@ def convert_cartesian_to_polar(vector):
     theta : scalar
     phi : scalar
     '''
-    raise(DeprecationWarning("Use spherical.cart2pol instead.")
+    warn("Use spherical.cart2pol instead.", DeprecationWarning, stacklevel=2)
     x,y,z = vector
-
+    
     theta = np.arccos(z)
     if np.allclose(theta, 0):
         # theta should be of size 1, but allclose handles masked values better
@@ -192,7 +213,7 @@ def convert_cartesian_to_polar_ma(vector):
     theta : scalar
     phi : scalar
     '''
-    raise(DeprecationWarning("Use spherical.cart2pol instead.")
+    warn("Use spherical.cart2pol instead.", DeprecationWarning, stacklevel=2)
     x,y,z = vector
 
     theta = np.ma.arccos(z)
@@ -644,7 +665,7 @@ def vmf_rvs(mu, k, n_pts=1):
     pts = convert_polar_to_cartesian(colat, longit)
     #print mean_dir(pts.T)
     alpha, beta = convert_cartesian_to_polar(mu)
-    return vectors.rotate_by_angles(pts, alpha, beta).T
+    return rotate_by_angles(pts, alpha, beta).T
 
 #---------------------------------------------------------------------------
 # Stephens, 1962 Biometrika paper - derivation of table A.12 in Fisher, 1987
@@ -862,9 +883,9 @@ def generate_cone_circle(theta, phi, angle, resolution=50.):
     phi_prime = np.linspace(0, 2 * np.pi, resolution)
     # start with defining cone around (0,0,1)
     origin = np.array((0.,0.,1.))
-    P_j = np.array([vectors.rotate_by_angles(origin, angle, q)
+    P_j = np.array([rotate_by_angles(origin, angle, q)
                     for q in phi_prime]).T
-    return vectors.rotate_by_angles(P_j, theta, phi).T
+    return rotate_by_angles(P_j, theta, phi).T
         
 def plot_circle(mu, angle, scalars=None, scalar_max=None,
 		color=None, radius=0.01, alpha=1.,

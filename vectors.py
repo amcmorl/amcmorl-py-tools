@@ -1,7 +1,16 @@
 import numpy as np
 #from numpy.linalg import norm
 
+def vec2str(vec, dp=2):
+    vec = np.asarray(vec)
+    if np.rank(vec) != 1:
+        raise(ValueError("vec must be rank 1"))
+    l = vec.size
+    fstr = " ".join(["%0." + "%d" % dp + "f"] * l)
+    return fstr % (tuple(vec))
+
 def norm(vec, axis=None):
+    vec = np.asarray(vec)
     return np.sqrt(np.sum(vec**2, axis=axis))
 
 def perpz(vec):
