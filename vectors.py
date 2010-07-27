@@ -6,7 +6,7 @@ def vec2str(vec, dp=2):
     if np.rank(vec) != 1:
         raise(ValueError("vec must be rank 1"))
     l = vec.size
-    fstr = " ".join(["%0." + "%d" % dp + "f"] * l)
+    fstr = " ".join(["%5." + "%d" % dp + "f"] * l)
     return fstr % (tuple(vec))
 
 def norm(vec, axis=None):

@@ -10,41 +10,49 @@ class Margins:
         self.hgap = hgap
         self.vgap = vgap
 
-def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), order='across-first'):
+    def __str__(self):
+        print "Left:", self.left
+        print "Bottom:", self.bottom
+        print "Right:", self.right
+        print "Top:", self.top
+        print "Horizontal gap:", self.hgap
+        print "Vertical gap:", self.vgap
+
+def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), direction='row'):
     '''Calculate rect values for axis.
     '''
     i_axs = np.array(i_ax)
-    axs = get_ax_rect(i_axs, ncols, nrows, margin=margin, order=order)
+    axs = get_ax_rect(i_axs, ncols, nrows, margin=margin, direction=direction)
     return axs[0]
 
-def get_col_row(i, ncols, nrows, order):
-    if order == 'across-first':
+def get_col_row(i, ncols, nrows, direction):
+    if direction == 'row':
         ncol = i % ncols
         nrow = i / ncols
-    if order == 'down-first':
+    if direction == 'col':
         ncol = i / nrows
         nrow = i % nrows
     return ncol, nrow
 
-def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), order='across-first'):
+def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), direction='row'):
     '''Calculate rect values for several axes.
     '''
     i_axs = np.asarray(i_axs)    
-    assert order in ['across-first', 'down-first']
+    assert direction in ['row', 'col']
     w = (1 - (margin.left + margin.right + \
                   (ncols - 1) * margin.hgap)) / float(ncols)
     h = (1 - (margin.bottom + margin.top + \
                   (nrows - 1) * margin.vgap)) / float(nrows)
-    ncol, nrow = get_col_row(i_axs, ncols, nrows, order)
+    ncol, nrow = get_col_row(i_axs, ncols, nrows, direction)
     l = margin.left + ncol * (w + margin.hgap)
     b = margin.bottom + (nrows - nrow - 1) * (h + margin.vgap)
     ax_rects = np.vstack((l, b, np.ones_like(l) * w, np.ones_like(b) * h))
     return ax_rects.T
 
 def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
-                     order='across-first', sharex='none',
+                     direction='row', sharex='none',
                      yspines='left', xspines='bottom'):
-    '''Create a grid of axes for suitable for plots.
+    '''Create a grid of axes suitable for plots.
 
     Parameters
     ----------
@@ -53,8 +61,8 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
     margin : Margins instance
     fig : mpl figure
       figure to use; if None, creates a new figure
-    order : {'across-first', 'down-first'}
-      numbering order for plots
+    direction : {'row', 'col'}
+      numbering direction for plots
     sharex : {'col', 'row', 'all', 'none'}
       how, if at all, to share x axes
     yspines : {'left', 'all'}
@@ -66,7 +74,7 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
     -------
     axes : list of mpl Axes objects
     '''
-    assert(order in ['across-first', 'down-first'])
+    assert(direction in ['row', 'col'])
     assert(sharex in ['col', 'row', 'all', 'none'])
     assert(yspines in ['left', 'all'])
     assert(xspines in ['bottom', 'all'])
@@ -75,12 +83,12 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
         else n_axes / ncols + 1
     axes = []
     i_axs = np.arange(n_axes)
-    axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin, order=order)
+    axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin, direction=direction)
     if fig == None:
         fig = plt.figure()
     col_leader = None
     for i, axrect in enumerate(axrects):
-        ncol, nrow = get_col_row(i, ncols, nrows, order)
+        ncol, nrow = get_col_row(i, ncols, nrows, direction)
         if sharex == 'col':
             if (nrow == 0) and (ncol > 0):
                 # reset at the top of new columns
