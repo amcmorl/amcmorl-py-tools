@@ -1,7 +1,7 @@
 import numpy as np
 
-def cart2pol(vector):
-    '''Convert a vector into two angles
+def cart2pol(array, axis=-1):
+    '''Convert an array containing xyz values into an array containing theta, phis
 
     Parameters
     ----------
@@ -13,6 +13,25 @@ def cart2pol(vector):
     theta : scalar
     phi : scalar
     '''
+    # make axis first
+    if axis < 0:
+        axis = np.rank(array) + axis
+    tlist = range(np.rank(array))
+    tlist.pop(tlist.index(axis))
+    tlist.insert(0, axis)
+    
+    x,y,z = array.transpose(tlist)
+    theta = np.arccos(z)
+    phi = np.arctan2(y,x)
+    phi[np.abs(theta) < 1e-8] = 0
+
+    # restore shape
+    result = np.concatenate((theta[None],phi[None]))
+    rlist = range(1, np.rank(result))
+    rlist.insert(axis, 0)
+    return result.transpose(rlist)
+
+def cart2pol_old(vector):
     x,y,z = vector
 
     theta = np.arccos(z)
