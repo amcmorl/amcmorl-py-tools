@@ -50,7 +50,7 @@ def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), direction='row'):
     return ax_rects.T
 
 def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
-                     direction='row', sharex='none',
+                     direction='row', sharex='none', sharey='none',
                      yspines='left', xspines='bottom'):
     '''Create a grid of axes suitable for plots.
 
@@ -76,7 +76,7 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
     '''
     assert(direction in ['row', 'col'])
     assert(sharex in ['col', 'row', 'all', 'none'])
-    assert(yspines in ['left', 'all'])
+    assert(yspines in ['left', 'all', 'none'])
     assert(xspines in ['bottom', 'all'])
     
     nrows = n_axes / ncols if n_axes % ncols == 0 \
@@ -87,13 +87,18 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
     if fig == None:
         fig = plt.figure()
     col_leader = None
+    row_leader = None
     for i, axrect in enumerate(axrects):
         ncol, nrow = get_col_row(i, ncols, nrows, direction)
         if sharex == 'col':
             if (nrow == 0) and (ncol > 0):
                 # reset at the top of new columns
                 col_leader = None
-        ax = fig.add_axes(axrect, sharex=col_leader)
+        if sharey == 'row':
+            if (ncol == 0) and (nrow > 0):
+                # reset at the beginning of new rows
+                row_leader = None
+        ax = fig.add_axes(axrect, sharex=col_leader, sharey=row_leader)
 
         # axis sharing
         if sharex == 'col':
@@ -102,7 +107,14 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
         elif sharex == 'all':
             if (nrow == 0) and (ncol == 0):
                 col_leader = ax
-
+        
+        if sharey == 'row':
+            if ncol == 0:
+                row_leader = ax
+        elif sharey == 'all':
+            if (ncol == 0) and (nrow == 0):
+                row_leader = ax
+                
         # spines
         which = []
         if yspines == 'left':
@@ -133,18 +145,30 @@ def format_spines(ax, which=[], hidden_color='none'):
     '''
     for loc, spine in ax.spines.iteritems():
         if loc in which:
+            spine.set_visible(True) # in case it was hidden previously
             spine.set_position(('outward', 5))
         else:
-            spine.set_color(hidden_color)
+            if hidden_color != 'none':
+                spine.set_color(hidden_color)
+            else:
+                spine.set_visible(False)
+
     if 'bottom' in which:
         ax.xaxis.set_ticks_position('bottom')
     else:
         ax.xaxis.set_ticks_position('none')
-        ax.xaxis.set_ticklabels([])
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+
     if 'left' in which:
         ax.yaxis.set_ticks_position('left')
     elif 'right' in which:
         ax.yaxis.set_ticks_position('right')
     else:
         ax.yaxis.set_ticks_position('none')
-        ax.yaxis.set_ticklabels([])
+    if ('left' in which) or ('right' in which):
+        for label in ax.get_yticklabels():
+            label.set_visible(True)
+    else:
+        for label in ax.get_yticklabels():
+            label.set_visible(False)
