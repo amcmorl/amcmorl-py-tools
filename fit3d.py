@@ -11,9 +11,6 @@ def fit_plane_resids( p, pts ):
            / sqrt(a**2 + b**2 + c**2) 
     return Ds
 
-
-
-
 def fit_plane( pts, p0=None ):
     '''fits a plane (in 3D) to an array of points (x,y,z co-ordinates)
     minimizing their orthogonal distance to the plane using leastsq'''
@@ -21,9 +18,6 @@ def fit_plane( pts, p0=None ):
         p0 = (1,1,1,1)
     plsq = leastsq( fit_plane_resids, p0, args=(pts,) )
     return plsq
-
-
-
 
 def vol2coords(data, thr=0):
     '''converts a volume dataset into a list of
@@ -33,9 +27,6 @@ def vol2coords(data, thr=0):
     cds = array( where(data > thr) )
     wi = data[tuple(cds)]
     return (cds, wi)
-
-
-
 
 def dotover(a,b):
     '''Returns dot product of last two dimensions of two 2-D arrays,
@@ -50,9 +41,6 @@ def dotover(a,b):
         res[i,...] = dot( a[i,...], b[i,...] )
     return res
 
-
-
-
 def innerover(a,b):
     '''Returns inner product of last dimension of two 2-D arrays,
     threaded over first dimension.'''
@@ -66,9 +54,6 @@ def innerover(a,b):
     for i in range( n ):
         res[i] = inner( a[i,:], b[i,:] )
     return res
-
-
-
 
 def fitlineNdw(x,w):
     '''fits a line (vector D through pt a)
