@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import os.path
 
@@ -9,7 +10,8 @@ def rundisp(fn):
             os.system("notify-send 'Done!'")
             return res
         except:
-            os.system("notify-send 'Oops!'")
+            typ, val, tbk = sys.exc_info()
+            os.system("notify-send '%s: %s'" % (typ.__name__, str(val)))
             raise
     return _
 
