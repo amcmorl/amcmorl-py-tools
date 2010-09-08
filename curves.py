@@ -57,6 +57,33 @@ def gauss3d(fx, fy, fz, err=0.01):
     Is  = np.exp(-(dimvals**2).sum(0))
     return Is / Is.sum()
 
+def logistic(x, m, a, b):
+    '''
+    Logistic, s-curve, or squashing function.
+
+    Parameters
+    ----------
+    x : array_like
+      x values to calculate for
+    m : float or int
+      mid point of curve, i.e. x @ which f(x) = a/2.
+    a : float or int
+      amplitude, f(+inf) = a
+    b : float or int
+      baseline, f(0) = b
+
+    Returns
+    -------
+    f(x) : ndarray
+      s-curve of `x` data
+    '''
+    m = float(m)
+    a = float(a)
+    b = float(b)
+    c = -m / np.log(1 / (a / b - 1))
+    d = c * np.log(a / b - 1)
+    return a / (1 + np.exp((-x + d) / c))
+
 def dbl_boltzman(x, t1, tau1, t2, tau2, h):
     '''
     Parameters

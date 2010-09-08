@@ -44,3 +44,23 @@ def edge2cen(array, axis=-1):
         else:
             res = temp_res
     return res
+
+def clip_below(x, llim=0):
+    '''
+    Clip array at lower bound (i.e. values lower than bound are set to bound)
+
+    Parameters
+    ----------
+    x : ndarray
+      array to clip, is left intact
+    llim : scalar
+      lower bound
+
+    Returns
+    -------
+    clipped : ndarray
+      `x` with clipped values
+    '''
+    x = x.copy()
+    x[x < llim] = llim
+    return x
