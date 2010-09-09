@@ -57,8 +57,8 @@ def uniform_rvs_cart(size=1):
     -----
     Tested visually.
     '''
-    xyz = np.random.normal(size=(3,size))
-    return xyz / norm(xyz,axis=0)[None]
+    xyz = np.random.normal(size=(size, 3))
+    return xyz / norm(xyz,axis=1)[:,None]
 
 def convert_polar_to_cartesian(theta, phi):
     '''Convert a point described by two angles to Cartesian co-ordinates.

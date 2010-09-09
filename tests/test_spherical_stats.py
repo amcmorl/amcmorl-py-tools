@@ -2,6 +2,12 @@ from numpy.testing import *
 import numpy as np
 from spherical_stats import *
 
+def test_uniform_rvs_cart():
+    vs = sstats.uniform_rvs_cart(2)
+    assert_equal(vs.shape, [2,3])
+    assert_(np.max(vs) < 1.)
+    assert_(np.min(vs) > -1.)
+
 def test_convert_polar_to_cartesian():
     theta = np.pi/3.
     phi = np.pi/3.
