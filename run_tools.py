@@ -15,6 +15,11 @@ def rundisp(fn):
             raise
     return _
 
+def _chk_ar(inp, rank=None, shape=None):
+    inp = np.asarray(inp)
+    assert np.rank(inp) == rank
+    return inp
+
 def loras(filename, fn, *args, **kwargs):
     '''Load Or Run And Save'''
     if os.path.exists(filename):
