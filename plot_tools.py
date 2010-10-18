@@ -211,3 +211,38 @@ class FigNumer():
         next_num = self.next_num
         self.next_num += 1
         return next_num
+
+def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2):
+    '''
+    Plot an array as a series of image panels.
+    
+    Parameters
+    ----------
+    array : array_like
+      shape = n_panels, n_rows, n_cols
+    nrows : int
+      number of rows to plot panels in
+    panel_labels : list of strings
+      labels to give each panel
+    extra_col : float
+      "pad" around colour range
+    '''
+    if fig == None:
+        fig = plt.figure()
+    n_panels = array.shape[0]
+    ncols = n_panels / nrows if ((n_panels % nrows) == 0) \
+        else (n_panels / nrows) + 1
+    grid = AxesGrid(fig, 111, nrows_ncols = (nrows, ncols),
+                    axes_pad = 0.05, share_all=True,
+                    cbar_mode='single', cbar_location='right', cbar_size='15%')
+    for i in xrange(n_panels):
+        vmin = np.nanmin(array[0]) * (1 - extra_col)
+        vmax = np.nanmax(array[0]) * (1 + extra_col)
+        im = grid[i].imshow(array[i], cmap=mpl.cm.jet, vmin=vmin, vmax=vmax)
+        if panel_labels != None:
+            grid[i].set_title(panel_labels[i], size='x-small')
+    plt.colorbar(im, cax=grid.cbar_axes[0])
+    cax = grid.cbar_axes[0]
+    cax.axis["right"].toggle(ticks=True, ticklabels=True, label=True)
+    cax.set_ylabel("")
+    return grid
