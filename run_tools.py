@@ -76,3 +76,19 @@ def find_unique_filename(fname):
             i += 1
             newfname = "%s_%d%s" % (name, i, ext)
         return "%s_%d" % (name, i)
+
+def shc(s, c):
+    '''
+    SHell Colour: add a colour `c` specification to string `s`.
+
+    s : string
+      string to colourize
+    c : string
+      character code of colour to use, ala matplotlib,
+      currently one of 'r', 'g'
+    '''
+    col = {'r' : 31,
+           'g' : 32}
+    if c not in col.keys():
+        raise ValueError("`c` must be one of %s" % (str(col.keys())))
+    return "\033[1;%2dm%s\033[1;m" % (col[c], s)

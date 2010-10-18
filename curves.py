@@ -84,6 +84,42 @@ def logistic(x, m, a, b):
     d = c * np.log(a / b - 1)
     return a / (1 + np.exp((-x + d) / c))
 
+def squash(x, sqp):
+    '''
+    Alternative signature for squashing function, using a parameter dictionary.
+
+    Parameters
+    ----------
+    x : array_like
+      x values to calculate for
+    sqp : dict
+      parameters for squashing function, keys are:
+      m - mid-point, x at which y=a/2
+      a - amplitude, max y value, at x=+inf
+      b - baseline, y value at x=0
+      
+    Returns
+    -------
+    f(x) - ndarray
+      squashed `x` data
+    '''
+    return logistic(x, sqp['m'], sqp['a'], sqp['b'])
+
+def set_squash_defaults(sqp, x):
+    '''
+    Set reasonable defaults on squashing function parameters. Works inplace.
+
+    Parameters
+    ----------
+    sqp : dict
+      parameters for squashing function, see `squash` definition
+    x : array_like
+      independent variables
+    '''
+    sqp.setdefault('m', (np.max(x) + np.min(x)) / 2.)
+    sqp.setdefault('a', np.max(x))
+    sqp.setdefault('b', 0.05 * np.max(x))
+
 def dbl_boltzman(x, t1, tau1, t2, tau2, h):
     '''
     Parameters
