@@ -83,7 +83,8 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
         else n_axes / ncols + 1
     axes = []
     i_axs = np.arange(n_axes)
-    axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin, direction=direction)
+    axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin,
+                           direction=direction)
     if fig == None:
         fig = plt.figure()
     col_leader = None
