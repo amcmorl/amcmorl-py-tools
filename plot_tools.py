@@ -11,12 +11,17 @@ class Margins:
         self.vgap = vgap
 
     def __str__(self):
-        print "Left:", self.left
-        print "Bottom:", self.bottom
-        print "Right:", self.right
-        print "Top:", self.top
-        print "Horizontal gap:", self.hgap
-        print "Vertical gap:", self.vgap
+        str = "Left: %s\n" % (self.left)
+        str += "Bottom: %s\n" % (self.bottom)
+        str += "Right: %s\n" % (self.right)
+        str += "Top: %s\n" % (self.top)
+        str += "Horizontal gap: %s\n" % (self.hgap)
+        str += "Vertical gap: %s" % (self.vgap)
+        return str 
+
+    def get_rect(self):
+        return [self.left, self.bottom,
+                1 - self.right - self.left, 1 - self.top - self.bottom]
 
 def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), direction='row'):
     '''Calculate rect values for axis.
