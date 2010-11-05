@@ -23,6 +23,31 @@ class Margins:
         return [self.left, self.bottom,
                 1 - self.right - self.left, 1 - self.top - self.bottom]
 
+    def set_from_rect(self, rect, total_width=1, total_height=1):
+        self.left = rect[0]
+        self.bottom = rect[1]
+        width = rect[2]
+        height = rect[3]
+        self.right = total_width - width - self.left
+        self.top = total_height - height - self.bottom
+
+def make_margin_from_rect(rect, hgap=0, vgap=0,
+                          total_width=1, total_height=1):
+    left = rect[0]
+    bottom = rect[1]
+    width = rect[2]
+    height = rect[3]
+    right = total_width - width - left
+    top = total_height - height - bottom
+    return Margins(left, bottom, right, top, hgap, vgap)
+
+def make_enough_rows(total, cols):
+    rows = int(total / cols)
+    extra = int(total % cols)
+    if extra > 0:
+        rows += 1
+    return rows
+
 def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), direction='row'):
     '''Calculate rect values for axis.
     '''
