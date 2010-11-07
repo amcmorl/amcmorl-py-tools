@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from mpl_toolkits.axes_grid import AxesGrid
 
 class Margins:
     def __init__(self, left=0, bottom=0, right=0, top=0, hgap=0, vgap=0):
