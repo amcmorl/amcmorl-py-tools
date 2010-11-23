@@ -273,7 +273,7 @@ def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2):
         vmax = np.nanmax(array[0]) * (1 + extra_col)
         im = grid[i].imshow(array[i], cmap=mpl.cm.jet, vmin=vmin, vmax=vmax)
         if panel_labels != None:
-            grid[i].set_title(panel_labels[i], size='x-small')
+            grid[i].set_title(panel_labels[i], size='small')
     plt.colorbar(im, cax=grid.cbar_axes[0])
     cax = grid.cbar_axes[0]
     cax.axis["right"].toggle(ticks=True, ticklabels=True, label=True)
