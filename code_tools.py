@@ -6,4 +6,6 @@ def dparse(default_values, dic):
             dic[k] = v
     return dic
 
+import numpy as np
+anynans = lambda x : np.any(np.isnan(x))
 
