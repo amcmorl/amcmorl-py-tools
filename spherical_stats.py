@@ -7,6 +7,7 @@ from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from warnings import warn
+from spherical import cart2pol, pol2cart
 
 ''' Naming and angle conventions:
 
@@ -421,7 +422,8 @@ class Lambertograph(object):
         top_hemisphere = P_c[..., z] >= 0
         bot_hemisphere = P_c[..., z] <= 0
         # convert P_c to 3d polar co-ordinates
-        P_p = np.apply_along_axis(convert_cartesian_to_polar, 1, P_c)
+        P_p = cart2pol(P_c, 1)
+        #P_p = np.apply_along_axis(convert_cartesian_to_polar, 1, P_c)
         
         # correct order of points must be maintained!!
         # there are three cases: top only, bottom only, top and bottom
@@ -661,7 +663,7 @@ def vmf_rvs(mu, k, n_pts=1):
     l = np.exp(-2 * k)
     colat = 2 * np.arcsin(np.sqrt(-np.log(R_0 * (1 - l) + l) / (2 * k)))
     longit = 2 * np.pi * R_1
-
+    
     pts = convert_polar_to_cartesian(colat, longit)
     #print mean_dir(pts.T)
     alpha, beta = convert_cartesian_to_polar(mu)
