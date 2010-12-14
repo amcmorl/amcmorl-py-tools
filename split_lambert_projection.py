@@ -284,7 +284,8 @@ class SplitLambertAxes(Axes):
 
     def set_theta_grid(self, rads):
         """
-        Set the number of radians between each theta grid, i.e. circle of latitude
+        Set the number of radians between each theta grid,
+        i.e. circle of latitude
 
         This is an example method that is specific to this projection
         class -- it provides a more convenient interface to set the
@@ -292,7 +293,7 @@ class SplitLambertAxes(Axes):
         """
         # Set up a FixedLocator at each of the points, evenly spaced
         # by radians.
-        number = (np.pi / rads) + 1
+        number = 0 #(np.pi / rads) + 1
         self.xaxis.set_major_locator(
             FixedLocator(
                 np.linspace(0, np.pi, number, True)[1:-1]))
@@ -308,7 +309,7 @@ class SplitLambertAxes(Axes):
         """
         # Set up a FixedLocator at each of the points, evenly spaced
         # by radians.
-        number = (2 * np.pi / rads) + 1
+        number = 0 # (2 * np.pi / rads) + 1
         self.yaxis.set_major_locator(
             FixedLocator(
                 np.linspace(0, 2 * np.pi, number, True)[1:-1]))
@@ -368,7 +369,8 @@ import matplotlib.pyplot as plt
 ax = plt.subplot(111, projection="split_lambert")
 #plt.grid(True)
 H = np.pi
-p = plt.plot([0, 3/8.*H, 3/8.*H, 11/8.*H],
-             [0,      0,   H/6.,    H/6.], "o--")
+#p = plt.plot([0, 3/8.*H, 3/8.*H, 11/8.*H],
+#             [0,      0,   H/6.,    H/6.], "o--")
+p = plt.plot([0, H], [0, 0], 'o-')
 
 plt.show()
