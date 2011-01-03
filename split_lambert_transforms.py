@@ -53,9 +53,9 @@ class SplitLambertTransform(Transform):
         phi[top_hemi] = (np.pi - phi[top_hemi]) % (2 * np.pi)
         
         # 3d -> 2d polar co-ordinates
-        rho = 2 * np.sin((np.pi - theta)/2.)
+        rho = (2 * np.sin((np.pi - theta)/2.))
         rho /= 4 * np.sqrt(2.)
-        psi = phi
+        psi = phi % (2 * np.pi)
         tr = np.concatenate((psi, rho), 1)
 
         # 2d polar -> 2d cartesian co-ordinates
@@ -74,8 +74,9 @@ class SplitLambertTransform(Transform):
         # changing the length of the data array must happen within
         # ``transform_path``.
     def transform_path(self, path):
-        ipath = path.interpolated(self._resolution)
-        nvert = self.transform(ipath.vertices)        
+        ipath = self.interpolate_path(path) # interpolate in data-space
+        
+        nvert = self.transform(ipath.vertices) # transform interpolated pts
         ncode = np.array([y for x,y in ipath.iter_segments(simplify=False)])
         #npath = Path(nvert, ncode)
         # must change all codes in that segment to Path.MOVETO
@@ -88,9 +89,32 @@ class SplitLambertTransform(Transform):
         flip = [x + 1 for x in np.nonzero(np.diff(nx > 0))]
         ncode[flip] = Path.MOVETO
         npath = Path(nvert, ncode)
+
+        #ipath = path.interpolated(self._resolution)
+        #print "ipath:", ipath
+        #np.savez("/home/amcmorl/tmp/transform_debug.npz",
+        #         path=path, ipath=ipath)
         
         # print [y for x,y in npath.iter_segments(simplify=False)]
         return npath
+
+    def interpolate_path(self, path):
+        """
+        Returns a new path resampled to length N x steps.  Does not
+        currently handle interpolating curves.
+        """
+        steps = self._resolution
+        if steps == 1:
+            return self
+
+        vertices = circular_interpolation(path.vertices, steps)
+        codes = path.codes
+        if codes is not None:
+            new_codes = Path.LINETO * np.ones(((len(codes) - 1) * steps + 1, ))
+            new_codes[0::steps] = codes
+        else:
+            new_codes = None
+        return Path(vertices, new_codes)
 
     transform_path_non_affine = transform_path
 
@@ -98,6 +122,39 @@ class SplitLambertTransform(Transform):
         return InvertedSplitLambertTransform()
     inverted.__doc__ = Transform.inverted.__doc__
 
+def circular_interpolation(a, steps):
+    '''
+    special case for interpolation of circular co-ordinates
+    i.e. mod 2 * pi
+    '''
+    if steps == 1:
+        return a
+
+    steps = np.floor(steps)
+    new_length = ((len(a) - 1) * steps) + 1
+    new_shape = list(a.shape)
+    new_shape[0] = new_length
+    result = np.zeros(new_shape, a.dtype)
+
+    result[0] = a[0]
+    a0 = a[0:-1]
+    a1 = a[1:  ]
+    # problem is:
+    # * only with phi dimension
+    # * when shortest distance between a0 and a1 goes through
+    #   2n * np.pi (for n E N), rather than just difference
+       
+    delta = (a1 - a0)
+    ow = np.abs(delta[:,1]) > np.pi # go other way on these ones
+    delta[ow,1] = (2 * np.pi - np.abs(delta[ow,1])) * np.sign(delta[ow,1]) * -1
+    delta /= steps
+    
+    for i in range(1, int(steps)):
+        result[i::steps] = delta * i + a0
+    result[steps::steps] = a1
+
+    return result
+    
 class InvertedSplitLambertTransform(Transform):
     input_dims = 2
     output_dims = 2
@@ -170,3 +227,24 @@ def test_split_lambert_transform():
 #             bfield % b__ + ' '.join(['%5.2f' % y for y in b_[i]]) 
 
         
+# a0
+# [[ 0.9047 -3.081 ]
+#  [ 0.8779  2.3838]
+#  [ 1.7322  1.589 ]
+#  [ 1.9654  1.505 ]
+#  [ 1.9325  1.5059]
+#  [ 1.8533  1.6677]
+#  [ 1.786   2.0018]
+#  [ 1.7577  2.0385]
+#  [ 1.7467  1.9461]]
+# a1
+# [[ 0.8779  2.3838]
+#  [ 1.7322  1.589 ]
+#  [ 1.9654  1.505 ]
+#  [ 1.9325  1.5059]
+#  [ 1.8533  1.6677]
+#  [ 1.786   2.0018]
+#  [ 1.7577  2.0385]
+#  [ 1.7467  1.9461]
+#  [ 1.5895  1.7791]]
+

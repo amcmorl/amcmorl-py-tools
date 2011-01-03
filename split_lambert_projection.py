@@ -29,15 +29,6 @@ class TwoCircle(Patch):
         *xy*
           center of ellipse
 
-        *width*
-          length of horizontal axis
-
-        *height*
-          length of vertical axis
-
-        *angle*
-          rotation in degrees (anti-clockwise)
-
         Valid kwargs are:
         %(Patch)s
         """
@@ -83,7 +74,8 @@ class TwoCircle(Patch):
     def contains(self,ev):
         if ev.x is None or ev.y is None: return False,{}
         x, y = self.get_transform().inverted().transform_point((ev.x, ev.y))
-        return (((x-1)*(x-1) + y*y) <= 1.0) or (((x+1)*(x+1) + y*y) <= 1.0), {}
+        return (((x - 1) * (x - 1) + y * y) <= 1.0) or \
+            (((x + 1) * (x + 1) + y * y) <= 1.0), {}
 
 # This example projection class is rather long, but it is designed to
 # illustrate many features, not all of which will be used every time.
@@ -365,12 +357,12 @@ register_projection(SplitLambertAxes)
 # Now make a simple example using the custom projection.
 #from pylab import *
 
-import matplotlib.pyplot as plt
-ax = plt.subplot(111, projection="split_lambert")
-#plt.grid(True)
-H = np.pi
-#p = plt.plot([0, 3/8.*H, 3/8.*H, 11/8.*H],
-#             [0,      0,   H/6.,    H/6.], "o--")
-p = plt.plot([0, H], [0, 0], 'o-')
+# import matplotlib.pyplot as plt
+# ax = plt.subplot(111, projection="split_lambert")
+# #plt.grid(True)
+# H = np.pi
+# #p = plt.plot([0, 3/8.*H, 3/8.*H, 11/8.*H],
+# #             [0,      0,   H/6.,    H/6.], "o--")
+# p = plt.plot([0, H], [0, 0], 'o-')
 
-plt.show()
+# plt.show()
