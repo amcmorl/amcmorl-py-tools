@@ -20,23 +20,26 @@ class TwoCircle(Patch):
     A scale-free ellipse.
     """
     def __str__(self):
-        return "Ellipse(%s,%s;%sx%s)"%(self.center[0],self.center[1],
-                                       self.radius)
+        return "TwoCircle(%s, %s; %s)" % (self.center[0], self.center[1],
+                                          self.radius)
 
     @docstring.dedent_interpd
     def __init__(self, xy, radius, **kwargs):
         """
-        *xy*
-          center of ellipse
-
+        xy : array_like
+          center of two circles
+        radius : scalar
+          size of each circle
+          
         Valid kwargs are:
         %(Patch)s
         """
         Patch.__init__(self, **kwargs)
-
         self.center = xy
-        self.width = 2 * radius
-        self.height = 2. * radius
+        self.radius = radius
+        self.width = 4. # two x unit circle (i.e. from +1 to -1)
+        self.height = 2. # one x unit circle
+        print "h", self.height
         path = copy(Path.unit_circle())
         n_pts = path.vertices.shape[0]
         path.vertices = np.tile(path.vertices, [2,1])
@@ -58,7 +61,7 @@ class TwoCircle(Patch):
         width = self.convert_xunits(self.width)
         height = self.convert_yunits(self.height)
         self._patch_transform = transforms.Affine2D() \
-            .scale(width * 0.5, height * 0.5) \
+            .scale(1. / width, 1. / height) \
             .translate(*center)
 
     def get_path(self):
@@ -74,29 +77,38 @@ class TwoCircle(Patch):
     def contains(self,ev):
         if ev.x is None or ev.y is None: return False,{}
         x, y = self.get_transform().inverted().transform_point((ev.x, ev.y))
-        return (((x - 1) * (x - 1) + y * y) <= 1.0) or \
-            (((x + 1) * (x + 1) + y * y) <= 1.0), {}
-
-# This example projection class is rather long, but it is designed to
-# illustrate many features, not all of which will be used every time.
-# It is also common to factor out a lot of these methods into common
-# code used by a number of projections with similar characteristics
-# (see geo.py).
+        return (((x - 1) * (x - 1) + y * y) <= 1) or \
+            (((x + 1) * (x + 1) + y * y) <= 1), {}
     
+def elliptical_spine(cls, axes, center, xrad, yrad, **kwargs):
+    '''
+    (staticmethod) Returns an elliptical :class: `Spine`.
+    '''
+    path = Path.unit_circle()
+    spine_type = 'circle' # since aspect = 2 and axes rect is 0-1, 0-1
+    result = cls(axes, spine_type, path, **kwargs)
+    set_patch_ellipse(result, center, xrad, yrad)
+    return result
+
+def set_patch_ellipse(cls, center, xrad, yrad):
+    cls._patch_type = 'circle'
+    cls._center = center
+    cls._width = xrad * 2
+    cls._height = yrad * 2
+    cls._angle = 0
+    cls.set_transform(cls.axes.transAxes)
+
 class SplitLambertAxes(Axes):
     """
     A custom class for the split Lambert projection, an equal-area map
     projection using one circle for each hemisphere.
     """
-    # The projection must specify a name.  This will be used be the
-    # user to select the projection, i.e. ``subplot(111,
-    # projection='split_lambert')``.
     name = 'split_lambert'
     resolution = 75
 
     def __init__(self, *args, **kwargs):
         Axes.__init__(self, *args, **kwargs)
-        self.set_aspect(1.0, adjustable='box', anchor='C')
+        self.set_aspect(0.5, adjustable='box', anchor='C')
         self.cla()
 
     def _init_axis(self):
@@ -124,7 +136,7 @@ class SplitLambertAxes(Axes):
         self.xaxis.set_minor_locator(NullLocator())
         self.yaxis.set_minor_locator(NullLocator())
 
-        # Do not display ticks -- we only want gridlines and text
+        # Do not display ticks
         self.xaxis.set_ticks_position('none')
         self.yaxis.set_ticks_position('none')
 
@@ -169,8 +181,8 @@ class SplitLambertAxes(Axes):
 
         # 2) The above has an output range that is not in the unit
         # rectangle, so scale and translate it so it fits correctly
-        # within the axes.  Only need to shift origin (0,0), to (0.5, 0.5).
-        self.transAffine = Affine2D().translate(0.5, 0.5)
+        # within the axes. Need to scale height up by 2 and move origin.
+        self.transAffine = Affine2D().scale(1,2).translate(0.5, 0.5)
 
         # 3) This is the transformation from axes space to display
         # space.
@@ -200,7 +212,7 @@ class SplitLambertAxes(Axes):
             self._yaxis_pretransform + \
             self.transData
 
-    def get_xaxis_transform(self,which='grid'):
+    def get_xaxis_transform(self, which='grid'):
         """
         Override this method to provide a transformation for the
         x-axis grid and ticks.
@@ -224,11 +236,12 @@ class SplitLambertAxes(Axes):
         return TwoCircle((0.5, 0.5), 0.25)
 
     def _gen_axes_spines(self):
-        return {'top':mspines.Spine.circular_spine( \
-                self, (0.25, 0.5), 0.25),
-                'bottom':mspines.Spine.circular_spine( \
-                self, (0.75, 0.5), 0.25)}
-
+        # circular_spine(axes, center, radius)
+        return {'top' : elliptical_spine(mspines.Spine, \
+                self, (0.25, 0.5), 0.25, 0.5),
+                'bottom' : elliptical_spine(mspines.Spine, \
+                self, (0.75, 0.5), 0.25, 0.5)}
+    
     # Prevent the user from applying scales to one or both of the
     # axes.  In this particular case, scaling the axes wouldn't make
     # sense, so we don't allow it.
@@ -355,11 +368,9 @@ class SplitLambertAxes(Axes):
 register_projection(SplitLambertAxes)
 
 # Now make a simple example using the custom projection.
-#from pylab import *
 
 # import matplotlib.pyplot as plt
 # ax = plt.subplot(111, projection="split_lambert")
-# #plt.grid(True)
 # H = np.pi
 # #p = plt.plot([0, 3/8.*H, 3/8.*H, 11/8.*H],
 # #             [0,      0,   H/6.,    H/6.], "o--")

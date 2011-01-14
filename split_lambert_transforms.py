@@ -74,28 +74,19 @@ class SplitLambertTransform(Transform):
         # changing the length of the data array must happen within
         # ``transform_path``.
     def transform_path(self, path):
+        # print "Old verts: "
+        # print path.vertices,path.codes
+        # print "*********"
+        if path.codes[-1] == 79:
+            pass #1/0.
         ipath = self.interpolate_path(path) # interpolate in data-space
         
         nvert = self.transform(ipath.vertices) # transform interpolated pts
         ncode = np.array([y for x,y in ipath.iter_segments(simplify=False)])
-        #npath = Path(nvert, ncode)
-        # must change all codes in that segment to Path.MOVETO
-        #print '\n'.join([str(x) + str(y) for 
-        #                 x,y in npath.iter_segments(simplify=False)])
-        # could try making line segment where x switches sign a MOVETO
-        # currently will depend on there being no intermediate points
-        # in that line segment
         nx = nvert[:,0]
         flip = [x + 1 for x in np.nonzero(np.diff(nx > 0))]
         ncode[flip] = Path.MOVETO
         npath = Path(nvert, ncode)
-
-        #ipath = path.interpolated(self._resolution)
-        #print "ipath:", ipath
-        #np.savez("/home/amcmorl/tmp/transform_debug.npz",
-        #         path=path, ipath=ipath)
-        
-        # print [y for x,y in npath.iter_segments(simplify=False)]
         return npath
 
     def interpolate_path(self, path):
@@ -106,7 +97,7 @@ class SplitLambertTransform(Transform):
         steps = self._resolution
         if steps == 1:
             return self
-
+        
         vertices = circular_interpolation(path.vertices, steps)
         codes = path.codes
         if codes is not None:
@@ -125,7 +116,7 @@ class SplitLambertTransform(Transform):
 def circular_interpolation(a, steps):
     '''
     special case for interpolation of circular co-ordinates
-    i.e. mod 2 * pi
+    i.e. phi has to be done `mod 2 * pi`
     '''
     if steps == 1:
         return a
@@ -211,40 +202,3 @@ def test_split_lambert_transform():
     print "********"
     assert(np.allclose(islt.transform(answers), tp))
     
-# def mprint(a, a_, b, b_):
-#     assert a_.shape[0] == b_.shape[0]
-#     afield = '%s' % ('%' + '%d' % (len(a) + 1) + 's ')
-#     bfield = '%s' % ('%' + '%d' % (len(b) + 1) + 's ')
-#     n_lines = a_.shape[0]
-#     for i in xrange(n_lines):
-#         if i == 0:
-#             a__ = a
-#             b__ = b
-#         else:
-#             a__ = ''
-#             b__ = ''
-#         print afield % a__ + ' '.join(['%5.2f' % x for x in a_[i]]) + '  ' + \
-#             bfield % b__ + ' '.join(['%5.2f' % y for y in b_[i]]) 
-
-        
-# a0
-# [[ 0.9047 -3.081 ]
-#  [ 0.8779  2.3838]
-#  [ 1.7322  1.589 ]
-#  [ 1.9654  1.505 ]
-#  [ 1.9325  1.5059]
-#  [ 1.8533  1.6677]
-#  [ 1.786   2.0018]
-#  [ 1.7577  2.0385]
-#  [ 1.7467  1.9461]]
-# a1
-# [[ 0.8779  2.3838]
-#  [ 1.7322  1.589 ]
-#  [ 1.9654  1.505 ]
-#  [ 1.9325  1.5059]
-#  [ 1.8533  1.6677]
-#  [ 1.786   2.0018]
-#  [ 1.7577  2.0385]
-#  [ 1.7467  1.9461]
-#  [ 1.5895  1.7791]]
-

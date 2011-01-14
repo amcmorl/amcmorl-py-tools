@@ -479,17 +479,33 @@ class Lambertograph(object):
         return line
         #return P_c, P_p, P_top, P_bot, Q_top, Q_bot
 
-    def scale_axes(self):
-        self.ax_top.set_rmax(np.sqrt(2.))
-        self.ax_bot.set_rmax(np.sqrt(2.))
+    # def plot_line(elf, array):
+    #     '''
+    #     Plot a line on the Lambert plot.
+        
+    #     Parameters
+    #     ----------
+    #     array : ndarray
+    #       co-ordinates in xyz format, shape should be (npt, 3)
+    #     '''
+    #     # divide line into upper and lower hemispheres
 
-    def clear(self):
-        self.ax_top.lines = []
-        self.ax_bot.lines = []
-        plt.draw()
+    #     # interpolate point on circle edge, so that lines go to edges
 
-    def savefig(self, filename):
-        self.figure.savefig(filename)
+    #     # 
+               
+    
+    # def scale_axes(self):
+    #     self.ax_top.set_rmax(np.sqrt(2.))
+    #     self.ax_bot.set_rmax(np.sqrt(2.))
+
+    # def clear(self):
+    #     self.ax_top.lines = []
+    #     self.ax_bot.lines = []
+    #     plt.draw()
+
+    # def savefig(self, filename):
+    #     self.figure.savefig(filename)
         
 def parameterized_circle_3d(t, a, b, c):
     '''Returns a point on a circle defined by two points on the circle, its
