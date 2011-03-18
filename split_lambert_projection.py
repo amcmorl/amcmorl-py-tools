@@ -39,7 +39,6 @@ class TwoCircle(Patch):
         self.radius = radius
         self.width = 4. # two x unit circle (i.e. from +1 to -1)
         self.height = 2. # one x unit circle
-        print "h", self.height
         path = copy(Path.unit_circle())
         n_pts = path.vertices.shape[0]
         path.vertices = np.tile(path.vertices, [2,1])
@@ -361,14 +360,50 @@ class SplitLambertAxes(Axes):
     def end_pan(self):
         pass
     def drag_pan(self, button, key, x, y):
-        pass    
-    
+        pass
+
+    def split_pcolor(self, data):
+        '''
+        data : ndarray
+        a 2-d array, arranged theta * phi
+        data is assumed to cover 0:np.pi in x/theta, and 0:2*np.pi in y/phi
+        number of bins in x/theta must be even 
+        
+        Notes
+        -----
+        Two calls to pcolor are made, one for the top hemisphere
+        (theta < np.pi/2) and one for the bottom (theta > np.pi / 2.)
+        '''
+        if np.rank(data) != 2:
+            raise ValueError("Data must be 2-d")
+        nt, nph = data.shape
+        if nt % 2 != 0:
+            raise ValueError("Number of bins in first dimension must be even.")
+
+        # generate t and p index values
+        x, y = np.mgrid[0:nt + 1, 0:nph + 1].astype(float)
+        t = x / x.max() * np.pi
+        p = y / y.max() * 2 * np.pi
+
+        # pcolor bottom hemisphere
+        eps = 1e-8
+        bi = nt / 2 + 1 # theta border index
+        ttop = t[:bi].copy()
+        ptop = p[:bi]
+        ttop[-1] -= eps # fix close to border values
+        self.pcolor(ttop, ptop, data[:bi - 1])
+
+        # pcolor top hemisphere
+        tbot = t[bi-1:].copy()
+        pbot = p[bi-1:]
+        self.pcolor(tbot, pbot, data[bi - 1:])
+
 # Now register the projection with matplotlib so the user can select
 # it.
 register_projection(SplitLambertAxes)
 
 # Now make a simple example using the custom projection.
-
+        
 # import matplotlib.pyplot as plt
 # ax = plt.subplot(111, projection="split_lambert")
 # H = np.pi

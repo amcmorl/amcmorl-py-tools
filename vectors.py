@@ -29,11 +29,14 @@ def perpz(vec):
     else:
         return unitvec( (vec[1], -vec[0]) )
 
-def unitvec(vec):
+def _unitvec(vec):
     '''returns the unit length vector
     in the same direction as vec'''
     vec = np.asarray(vec)
     return vec / np.sqrt(np.sum(vec ** 2))
+
+def unitvec(arr, axis=-1):
+    return np.apply_along_axis(_unitvec, axis, arr)
 
 def angle_between(a, b):
     '''returns the angle (in rads) between 2 vectors'''

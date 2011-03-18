@@ -245,7 +245,7 @@ class FigNumer():
         self.next_num += 1
         return next_num
 
-def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2):
+def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2, share_axes=True):
     '''
     Plot an array as a series of image panels.
     
@@ -266,7 +266,7 @@ def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2):
     ncols = n_panels / nrows if ((n_panels % nrows) == 0) \
         else (n_panels / nrows) + 1
     grid = AxesGrid(fig, 111, nrows_ncols = (nrows, ncols),
-                    axes_pad = 0.05, share_all=True,
+                    axes_pad = 0.05, share_all=share_axes,
                     cbar_mode='single', cbar_location='right', cbar_size='15%')
     for i in xrange(n_panels):
         vmin = np.nanmin(array[0]) * (1 - extra_col)
@@ -277,5 +277,5 @@ def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2):
     plt.colorbar(im, cax=grid.cbar_axes[0])
     cax = grid.cbar_axes[0]
     cax.axis["right"].toggle(ticks=True, ticklabels=True, label=True)
-    cax.set_ylabel("")
+    #cax.set_ylabel("")
     return grid

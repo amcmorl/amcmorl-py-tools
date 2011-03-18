@@ -6,7 +6,7 @@ def cart2pol(array, axis=-1):
     Parameters
     ----------
     array : array_like, shape (3,)
-      x,y,z components of vector
+      x,y,z components of vector, must be unit length for this to make sense
 
     Returns
     -------

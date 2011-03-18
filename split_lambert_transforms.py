@@ -74,11 +74,6 @@ class SplitLambertTransform(Transform):
         # changing the length of the data array must happen within
         # ``transform_path``.
     def transform_path(self, path):
-        # print "Old verts: "
-        # print path.vertices,path.codes
-        # print "*********"
-        if path.codes[-1] == 79:
-            pass #1/0.
         ipath = self.interpolate_path(path) # interpolate in data-space
         
         nvert = self.transform(ipath.vertices) # transform interpolated pts
