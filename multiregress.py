@@ -1,6 +1,7 @@
 import numpy as np
+from warnings import warn
 
-def multiregress(xs, y, with_err=True, add_const=True):
+def multiregress(xs, y, with_err=True, add_const=False, has_const=True):
     '''Multiple linear regression with statistics.
     
     Calculates the partial regression co-efficients b_{0..k} in the
@@ -30,24 +31,42 @@ def multiregress(xs, y, with_err=True, add_const=True):
     '''
     # add ones for linear regression
     n, k = xs.shape
+    
     if add_const:
-        xs_c = np.concatenate((np.ones((n,1)), xs), axis=1)
+        warn("constant term moved to the end! use at own risk")
+        xs_c = np.concatenate((xs, np.ones((n,1))), axis=1)
     else:
         xs_c = xs
+        
     b, resid, rank, s = np.linalg.lstsq(xs_c, y)
     if with_err:
         # resid is the 'unexplained sum-of-squares', a scalar
         s_y = np.sqrt(resid / (n - k - 1.)) # unexplained SD
+
+        if has_const:
+            # drop constant term for se calculation
+            # assumes constant term is at the end
+            xs = xs_c[:,:-1]
+            k -= 1
+        
         G_mult = np.linalg.inv( np.cov( xs.T ) * (n - 1) )
         se = s_y * np.sqrt(G_mult[np.eye(k, dtype=bool)])
         return b, se
     else:
         return b
 
-def rsq(x, y, add_const=True):
+def rsq(x, y, add_const=False, has_const=True):
     # calculate regression coefficients
-    b = multiregress(x, y, with_err=False, add_const=add_const)
-    b_nc = b[1:] # ignore constant term
+    b = multiregress(x, y, with_err=False,
+                     add_const=add_const, has_const=has_const)
+                     
+    # ignore constant term
+    if add_const or has_const:
+        b_nc = b[:-1]
+        
+    if has_const:
+        # drop last column
+        x = x[:,:-1]
     
     # standardize partial regression coefficients
     s_y = np.std(y, ddof=1)
@@ -65,17 +84,20 @@ def rsq_from_b(x, y, b):
     Parameters
     ----------
     x : array
-      dependent variables in regression, shape=(m,n)
+      independent variables in regression, shape=(m,n)
     y : array
-      independent variables in regression, shape=(m,)
+      dependent variables in regression, shape=(m,)
     b : array
       regression coefficients, shape=(n,)
+      
+    Notes
+    -----
+    Make sure to exclude constant terms from  prior to inputting data.
     '''
-    b_nc = b[1:]
     # standardize partial regression coefficients
     s_y = np.std(y, ddof=1)
     s_x = np.std(x, ddof=1, axis=0)    
-    b_prime = b_nc * s_x / s_y
+    b_prime = b * s_x / s_y
 
     # calculate correlation coefficients
     r_xy = np.corrcoef(y.T, x.T)[0,1:]

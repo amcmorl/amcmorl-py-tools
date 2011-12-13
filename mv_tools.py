@@ -1,5 +1,5 @@
-import point_primitives
-from enthought.mayavi import mlab
+import coord_primitives
+from mayavi import mlab
 
 def draw_sphere(color=(241/255., 233/255., 199/255.),
                 alpha=0.25, radius=1.):

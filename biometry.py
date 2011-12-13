@@ -28,8 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.'''
 
 import scipy.stats, numpy as n
 from copy import copy
-import unittest
-from numpy.testing import NumpyTestCase
+#import unittest
+#from numpy.testing import NumpyTestCase
 
 # data - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -355,32 +355,32 @@ def test_two_way_anova_with_replication():
     data = n.array((a_scabra, a_digit))
     results = two_way_anova_with_replication(data)
 
-class TestBiometry(NumpyTestCase):
-    def test_welchs_approximate_ttest(self):
-        chimpanzees = (37, 0.115, 0.017) # n, mean, sem
-        gorillas = (6, 0.511, 0.144)
-        case1 = welchs_approximate_ttest(chimpanzees[0], \
-                                    chimpanzees[1], \
-                                    chimpanzees[2], \
-                                    gorillas[0], \
-                                    gorillas[1], \
-                                    gorillas[2], \
-                                    0.05)
-        self.assertTrue( case1[0] )
-        self.assertAlmostEqual( case1[1], -2.73, 2 )
-        self.assertAlmostEqual( case1[2], 2.564, 2 )
+# class TestBiometry(NumpyTestCase):
+#     def test_welchs_approximate_ttest(self):
+#         chimpanzees = (37, 0.115, 0.017) # n, mean, sem
+#         gorillas = (6, 0.511, 0.144)
+#         case1 = welchs_approximate_ttest(chimpanzees[0], \
+#                                     chimpanzees[1], \
+#                                     chimpanzees[2], \
+#                                     gorillas[0], \
+#                                     gorillas[1], \
+#                                     gorillas[2], \
+#                                     0.05)
+#         self.assertTrue( case1[0] )
+#         self.assertAlmostEqual( case1[1], -2.73, 2 )
+#         self.assertAlmostEqual( case1[2], 2.564, 2 )
         
-        female = (10, 8.5, n.sqrt(3.6)/n.sqrt(10))
-        male = (10, 4.8, n.sqrt(0.9)/n.sqrt(10))
-        case2 = welchs_approximate_ttest(female[0], \
-                                female[1], \
-                                female[2], \
-                                male[0], \
-                                male[1], \
-                                male[2], 0.001)
-        self.assertTrue( case2[0] )
-        self.assertAlmostEqual( case2[1], 5.52, 2 )
-        self.assertAlmostEqual( case2[2], 4.781, 2 )
+#         female = (10, 8.5, n.sqrt(3.6)/n.sqrt(10))
+#         male = (10, 4.8, n.sqrt(0.9)/n.sqrt(10))
+#         case2 = welchs_approximate_ttest(female[0], \
+#                                 female[1], \
+#                                 female[2], \
+#                                 male[0], \
+#                                 male[1], \
+#                                 male[2], 0.001)
+#         self.assertTrue( case2[0] )
+#         self.assertAlmostEqual( case2[1], 5.52, 2 )
+#         self.assertAlmostEqual( case2[2], 4.781, 2 )
         
 
 def test():

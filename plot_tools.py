@@ -68,13 +68,15 @@ def get_col_row(i, ncols, nrows, direction):
 
 def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), direction='row'):
     '''Calculate rect values for several axes.
-    '''
-    i_axs = np.asarray(i_axs)    
+    '''        
+    i_axs = np.asarray(i_axs)
     assert direction in ['row', 'col']
+    #print "m.left", margin.left, "m.right", margin.right
     w = (1 - (margin.left + margin.right + \
                   (ncols - 1) * margin.hgap)) / float(ncols)
     h = (1 - (margin.bottom + margin.top + \
                   (nrows - 1) * margin.vgap)) / float(nrows)
+    #print "W", w, "H", h, "ncols", ncols
     ncol, nrow = get_col_row(i_axs, ncols, nrows, direction)
     l = margin.left + ncol * (w + margin.hgap)
     b = margin.bottom + (nrows - nrow - 1) * (h + margin.vgap)
@@ -188,6 +190,8 @@ def format_spines(ax, which=[], hidden_color='none'):
 
     if 'bottom' in which:
         ax.xaxis.set_ticks_position('bottom')
+    elif ('top' in which) and not ('bottom' in which):
+        ax.xaxis.set_ticks_position('top')
     else:
         ax.xaxis.set_ticks_position('none')
         for label in ax.get_xticklabels():
@@ -205,6 +209,14 @@ def format_spines(ax, which=[], hidden_color='none'):
     else:
         for label in ax.get_yticklabels():
             label.set_visible(False)
+
+def subplot_spec2margins(subplot_spec, fig, hgap=0., vgap=0.):
+    bbox = subplot_spec.get_position(fig)
+    left, bottom, width, height = bbox.bounds
+    right = 1 - left - width
+    top = 1 - bottom - height
+    #print left, bottom, right, top
+    return Margins(left, bottom, right, top, hgap, vgap)
 
 dashes = [[20, 2],
           [2, 2],
