@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import cos, sin, array, dot
 #from numpy.linalg import norm
 
 def vec2str(vec, dp=2):
@@ -10,6 +11,9 @@ def vec2str(vec, dp=2):
     return fstr % (tuple(vec))
 
 def norm(vec, axis=None):
+    '''
+    Return length of vector
+    '''
     vec = np.asarray(vec)
     return np.sqrt(np.sum(vec**2, axis=axis))
 
@@ -36,6 +40,16 @@ def _unitvec(vec):
     return vec / np.sqrt(np.sum(vec ** 2))
 
 def unitvec(arr, axis=-1):
+    '''
+    Returns unit length vector in same direction as vec
+
+    Parameters
+    ----------
+    vec : sequence
+      vector to normalize
+    axis : int, optional
+      axis along which to normalize, defaults to last
+    '''
     return np.apply_along_axis(_unitvec, axis, arr)
 
 def angle_between(a, b):
@@ -62,8 +76,6 @@ def rotate_about_centre(v, c, th):
 
 def rotate_about_origin_3d(vector, normal, theta):
     '''rotates the vector v around the normal vector n through angle th'''
-    cos = np.cos
-    sin = np.sin
     x, y, z = vector
     u, v, w = normal
     dt = u*x + v*y + w*z
@@ -106,7 +118,6 @@ def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=False):
     This performs two rotations:
       theta, about the y-axis; followed by phi, about the z-axis.
       '''
-    cos, sin = np.cos, np.sin
     t, ph = theta, phi
     A = np.array(([cos(t) * cos(ph), cos(t) * sin(ph), -sin(t)],
                   [-sin(ph),         cos(ph),          0],
@@ -115,3 +126,137 @@ def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=False):
         A = A.T
     return np.dot(A, vector)
 
+def Rx(theta):
+    '''
+    Construct rotation matrix for rotation about x.
+
+    Parameters
+    ----------
+    theta : float
+      angle in radians
+
+    Returns
+    -------
+    rotation_matrix : ndarray
+      3x3 rotation matrix
+    '''
+    t = theta
+    return array([[1,      0,       0],
+                  [0, cos(t), -sin(t)],
+                  [0, sin(t),  cos(t)]])
+
+def Ry(theta):
+    '''
+    Construct rotation matrix for rotation about y.
+
+    Parameters
+    ----------
+    theta : float
+      angle in radians
+
+    Returns
+    -------
+    rotation_matrix : ndarray
+      3x3 rotation matrix
+    '''
+    t = theta
+    return array([[ cos(t), 0, sin(t)],
+                  [ 0,      1,      0],
+                  [-sin(t), 0, cos(t)]])
+
+def Rz(theta):
+    '''
+    Construct rotation matrix for rotation about z.
+
+    Parameters
+    ----------
+    theta : float
+      angle in radians
+
+    Returns
+    -------
+    rotation_matrix : ndarray
+      3x3 rotation matrix
+    '''
+    t = theta
+    return array([[cos(t), -sin(t), 0],
+                  [sin(t),  cos(t), 0],
+                  [0,            0, 1]])
+
+def ypr2mat(ypr):
+    '''
+    Construct rotation matrix from yaw, pitch, roll.
+
+    Parameters
+    ----------
+    ypr : array_like
+      shape (3,),  yaw, pitch and roll angles
+
+    Returns
+    -------
+    rotation_matrix : ndarray
+      shape (3,3) rotation matrix
+    '''
+    return dot(dot(Rx(ypr[0]), Ry(ypr[1])), Rz(ypr[2]))
+    
+def cross_matrix(v):
+    '''
+    Returns the skew-symmetric matrix of a vector, defined as:
+        [0 -a3 a2
+        a3 0 -a1
+        -a2 a1 0]
+    '''
+    return np.array([[0,    -v[2],  v[1]],
+                     [v[2],     0, -v[0]],
+                     [-v[1], v[0],  0   ]])
+
+def tensor_product(u, v):
+    '''
+    Returns the tensor product of two vectors.
+    '''
+    return u[None] * v[:,None]
+
+def axis_angle2mat(axis, angle):
+    '''
+    Construct rotation matrix from axis of rotation and angle.
+    
+    Parameters
+    ----------
+    axis : array_like
+      vector of axis of rotation
+    angle : float
+      amount to rotate in radians
+    '''
+    axis = unitvec(axis)
+    if np.rank(axis) > 1:
+        raise ValueError('axis should be 1-d only')
+    nd = axis.shape[0]
+    xm = cross_matrix(axis)
+    tp = tensor_product(axis, axis)
+    c, s = cos(angle), sin(angle)
+    I = np.identity(nd)
+    return I * c + s * xm + (1 - c) * tp
+    
+def rotmat_between_two_vecs(u, v):
+    '''
+    Calculate the rotation matrix to transform from one vector `u`
+    to another 'v'.
+    
+    Parameters
+    ----------
+    u, v : array_like
+      1-d vectors
+      
+    Returns
+    -------
+    r : ndarray
+      rotation matrix
+    '''
+    u = unitvec(u)
+    v = unitvec(v)
+    # if vectors are parallel, return Indentity
+    if np.all(u == v):
+        return np.identity(u.shape[0])
+    axis = np.cross(u, v)
+    angle = np.arccos(np.dot(u,v))
+    return axis_angle2mat(axis, angle)
