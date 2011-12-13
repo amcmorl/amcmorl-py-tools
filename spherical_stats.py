@@ -1,5 +1,5 @@
 import numpy as np
-import point_primitives
+import coord_primitives
 import scipy.optimize as opt
 from vectors import rotate_by_angles, norm
 from enthought.mayavi import mlab
@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from warnings import warn
 from spherical import cart2pol, pol2cart
+
+from warnings import warn
+warn("This module is deprecated. Use vecgeom package instead.")
+
 
 ''' Naming and angle conventions:
 
@@ -872,7 +876,7 @@ def plot_pts(pts=None, mu=None):
     p3d = mlab.pipeline
 
     # plot unit sphere
-    sphere_pts = point_primitives.sphere()
+    sphere_pts = coord_primitives.sphere()
     sphere1 = mlab.mesh(*sphere_pts)
     sphere1.actor.mapper.scalar_visibility = False
     sphere1.actor.property.color = (241/255., 233/255., 199/255.)
