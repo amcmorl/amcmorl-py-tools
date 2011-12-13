@@ -1,6 +1,8 @@
 import numpy as np
 from numpy import cos, sin, array, dot
-#from numpy.linalg import norm
+
+from warnings import warn
+warn("This module is deprecated. Use vecgeom package instead.")
 
 def vec2str(vec, dp=2):
     vec = np.asarray(vec)

@@ -13,9 +13,6 @@ import matplotlib.axis as maxis
 from copy import copy
 from split_lambert_transforms import SplitLambertTransform
 
-from warnings import warn
-warn("This module is deprecated. Use vecgeom package instead.")
-
 import numpy as np
 
 class TwoCircle(Patch):

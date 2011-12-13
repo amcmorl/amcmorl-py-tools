@@ -9,6 +9,10 @@ import matplotlib as mpl
 from warnings import warn
 from spherical import cart2pol, pol2cart
 
+from warnings import warn
+warn("This module is deprecated. Use vecgeom package instead.")
+
+
 ''' Naming and angle conventions:
 
     2d cartesian:

@@ -1,8 +1,5 @@
 import numpy as np
 
-from warnings import warn
-warn("This module is deprecated. Use vecgeom package instead.")
-
 def cart2pol(array, axis=-1):
     '''Convert an array containing xyz values into an array containing theta, phis
 
