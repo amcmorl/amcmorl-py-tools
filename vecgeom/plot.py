@@ -35,29 +35,29 @@ def generate_cone_circle(theta, phi, angle, resolution=50.):
                     for q in phi_prime]).T
     return rotate_by_angles(P_j, theta, phi).T
         
-def plot_circle(mu, angle, scalars=None, scalar_max=None,
-        color=None, radius=0.01, alpha=1.,
-        resolution=50.):
-    x, y, z = 0, 1, 2
-    theta, phi = convert_cartesian_to_polar(mu)
-    P_k = generate_cone_circle(theta, phi, angle, resolution).T
-    
-    p3d = mlab.pipeline
-    if scalars == None:
-    tube = p3d.tube(p3d.line_source(P_k[x], P_k[y], P_k[z]))
-    else:
-    if type(scalars) == type(1) or type(scalars == type(1.)):
-        #'arraying %d' % (
-        scalars *= np.ones_like(P_k[0])
-        #'assigning scalars 
-        tube = p3d.tube(p3d.line_source(P_k[x],
-                        P_k[y],
-                        P_k[z], scalars))
-    tube.filter.radius = radius
-    surf = p3d.surface(tube)
-    if color != None:
-    surf.actor.actor.property.color = color
-    surf.actor.actor.property.opacity = alpha
-    if scalar_max != None:
-    mm = surf.module_manager.scalar_lut_manager
-    mm.data_range = np.array([0, scalar_max])
+#~ def plot_circle(mu, angle, scalars=None, scalar_max=None,
+        #~ color=None, radius=0.01, alpha=1.,
+        #~ resolution=50.):
+    #~ x, y, z = 0, 1, 2
+    #~ theta, phi = convert_cartesian_to_polar(mu)
+    #~ P_k = generate_cone_circle(theta, phi, angle, resolution).T
+    #~ 
+    #~ p3d = mlab.pipeline
+    #~ if scalars == None:
+        #~ tube = p3d.tube(p3d.line_source(P_k[x], P_k[y], P_k[z]))
+    #~ else:
+    #~ if type(scalars) == type(1) or type(scalars == type(1.)):
+        #~ #'arraying %d' % (
+        #~ scalars *= np.ones_like(P_k[0])
+        #~ #'assigning scalars 
+        #~ tube = p3d.tube(p3d.line_source(P_k[x],
+                        #~ P_k[y],
+                        #~ P_k[z], scalars))
+    #~ tube.filter.radius = radius
+    #~ surf = p3d.surface(tube)
+    #~ if color != None:
+    #~ surf.actor.actor.property.color = color
+    #~ surf.actor.actor.property.opacity = alpha
+    #~ if scalar_max != None:
+    #~ mm = surf.module_manager.scalar_lut_manager
+    #~ mm.data_range = np.array([0, scalar_max])

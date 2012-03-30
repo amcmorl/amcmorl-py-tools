@@ -2,9 +2,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid import AxesGrid
+import warnings
+
+def fill_between(x, y1, y2=0, ax=None, **kwargs):
+    """Plot filled region between `y1` and `y2`.
+
+    This function works exactly the same as matplotlib's fill_between, except
+    that it also plots a proxy artist (specifically, a rectangle of 0 size)
+    so that it can be added it appears on a legend.
+    """
+    ax = ax if ax is not None else plt.gca()
+    ax.fill_between(x, y1, y2, **kwargs)
+    p = plt.Rectangle((0, 0), 0, 0, **kwargs)
+    ax.add_patch(p)
+    return p
 
 class Margins:
     def __init__(self, left=0, bottom=0, right=0, top=0, hgap=0, vgap=0):
+        warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
         self.left = left
         self.bottom = bottom
         self.right = right
@@ -35,6 +50,7 @@ class Margins:
 
 def make_margin_from_rect(rect, hgap=0, vgap=0,
                           total_width=1, total_height=1):
+    warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
     left = rect[0]
     bottom = rect[1]
     width = rect[2]
@@ -58,6 +74,7 @@ def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), direction='row'):
     return axs[0]
 
 def get_col_row(i, ncols, nrows, direction):
+    warnings.warn("Use np.unravel_index instead.", DeprecationWarning)
     if direction == 'row':
         ncol = i % ncols
         nrow = i / ncols
@@ -108,6 +125,7 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
     -------
     axes : list of mpl Axes objects
     '''
+    warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
     assert(direction in ['row', 'col'])
     assert(sharex in ['col', 'row', 'all', 'none'])
     assert(yspines in ['left', 'all', 'none'])
@@ -166,7 +184,8 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
         axes.append(ax)
     return axes
 
-def format_spines(ax, which=[], hidden_color='none'):
+def format_spines(ax, which=[], hidden_color='none',
+                  position=('outward', 5)):
     '''
     Convenience function for formatting spines of a plot.
 
@@ -181,7 +200,7 @@ def format_spines(ax, which=[], hidden_color='none'):
     for loc, spine in ax.spines.iteritems():
         if loc in which:
             spine.set_visible(True) # in case it was hidden previously
-            spine.set_position(('outward', 5))
+            spine.set_position(position)
         else:
             if hidden_color != 'none':
                 spine.set_color(hidden_color)
