@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid import AxesGrid
 import warnings
+from scipy import stats
 
 def fill_between(x, y1, y2=0, ax=None, **kwargs):
     """Plot filled region between `y1` and `y2`.
@@ -16,6 +17,48 @@ def fill_between(x, y1, y2=0, ax=None, **kwargs):
     p = plt.Rectangle((0, 0), 0, 0, **kwargs)
     ax.add_patch(p)
     return p
+
+def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5)):
+    # fit a line of best fit (but use P value from non-parametric correlation measure
+    rho, pcor = stats.spearmanr(x, y)
+    m, c, r, plin_reg, e = stats.linregress(x, y)
+    lnx = np.linspace(np.min(x), np.max(x), 100)
+    lny = m * lnx + c
+    
+    if ax == None:
+        fig = plt.figure(figsize=(10,6))
+        ax = fig.add_subplot(111)
+    else:
+        fig = ax.figure
+    ax.plot(x, y, 'ko', ms=8)
+    ax.plot(lnx, lny, 'k-')
+    #aspect = (np.abs(np.diff(ax.get_xlim())) / np.abs(np.diff(ax.get_ylim()))).item()
+    #print np.degrees(np.arctan(m * aspect))
+    ax.text(ppos[0], ppos[1],r'm=%.2f P=%.4f' % (rho, plin_reg), transform=ax.transAxes)
+    format_spines(ax, which=['left', 'bottom'], position=('outward', 5))
+    if len(xlabel) > 0:
+        ax.set_xlabel(xlabel)
+    if len(ylabel) > 0:
+        ax.set_ylabel(ylabel)
+    if len(title) > 0:
+        ax.set_title(title)
+    return ax
+
+def plot_scatter(x, y, ax=None, xlabel='', ylabel='', title='', **kwargs):
+    if ax == None:
+        fig = plt.figure(figsize=(10,6))
+        ax = fig.add_subplot(111)
+    else:
+        fig = ax.figure
+    ax.plot(x, y, 'ko', ms=8, **kwargs)
+    format_spines(ax, which=['left', 'bottom'], position=('outward', 5))
+    if len(xlabel) > 0:
+        ax.set_xlabel(xlabel)
+    if len(ylabel) > 0:
+        ax.set_ylabel(ylabel)
+    if len(title) > 0:
+        ax.set_title(title)
+    return ax
 
 class Margins:
     def __init__(self, left=0, bottom=0, right=0, top=0, hgap=0, vgap=0):
