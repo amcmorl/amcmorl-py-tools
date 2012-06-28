@@ -50,7 +50,11 @@ def plot_scatter(x, y, ax=None, xlabel='', ylabel='', title='', **kwargs):
         ax = fig.add_subplot(111)
     else:
         fig = ax.figure
-    ax.plot(x, y, 'ko', ms=8, **kwargs)
+        
+    # set some sensible defaults
+    kwargs.setdefault('ms', 8)
+    
+    ax.plot(x, y, 'ko', **kwargs)
     format_spines(ax, which=['left', 'bottom'], position=('outward', 5))
     if len(xlabel) > 0:
         ax.set_xlabel(xlabel)

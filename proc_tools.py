@@ -1,5 +1,26 @@
 import numpy as np
 
+def arg_ind_fn_where(fn, arr, cond):
+    '''
+    Return the index/indices into `arr` given by `fn`, but only for elements of `arr` specified by `cond`.
+
+    Parameters
+    ----------
+    fn : callable
+        argX (X =min, max, sort) function, takes a 1-d argument
+    arr : array
+        1-d array
+    cond : sequence
+        index to arr
+
+    Returns
+    -------
+    ind : array
+    '''
+    assert np.rank(arr) == 1
+    sub = fn(arr[cond])
+    return np.arange(arr.size)[cond][sub]
+
 def edge2cen(array, axis=-1):
     '''
     Converts firing rates at edges of bins to firing rates in bin centers by

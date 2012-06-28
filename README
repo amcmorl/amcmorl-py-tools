@@ -1,0 +1,3 @@
+A collection of functions that I've written and found useful.
+
+In particular plot_tools, vecgeom, and spherical_stats get the most workout.
