@@ -5,6 +5,18 @@ from mpl_toolkits.axes_grid import AxesGrid
 import warnings
 from scipy import stats
 
+def no_clip(ax): 
+     "Turn off all clipping in axes ax; call immediately before drawing" 
+     ax.set_clip_on(False) 
+     artists = [] 
+     artists.extend(ax.collections) 
+     artists.extend(ax.patches) 
+     artists.extend(ax.lines) 
+     artists.extend(ax.texts) 
+     artists.extend(ax.artists) 
+     for a in artists: 
+         a.set_clip_on(False)
+
 def fill_between(x, y1, y2=0, ax=None, **kwargs):
     """Plot filled region between `y1` and `y2`.
 
