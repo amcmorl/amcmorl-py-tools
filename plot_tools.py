@@ -18,7 +18,7 @@ def fill_between(x, y1, y2=0, ax=None, **kwargs):
     ax.add_patch(p)
     return p
 
-def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5)):
+def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5), **kwargs):
     # fit a line of best fit (but use P value from non-parametric correlation measure
     rho, pcor = stats.spearmanr(x, y)
     m, c, r, plin_reg, e = stats.linregress(x, y)
@@ -30,11 +30,11 @@ def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='',
         ax = fig.add_subplot(111)
     else:
         fig = ax.figure
-    ax.plot(x, y, 'ko', ms=8)
+    ax.plot(x, y, 'ko', **kwargs)
     ax.plot(lnx, lny, 'k-')
     #aspect = (np.abs(np.diff(ax.get_xlim())) / np.abs(np.diff(ax.get_ylim()))).item()
     #print np.degrees(np.arctan(m * aspect))
-    ax.text(ppos[0], ppos[1],r'm=%.2f P=%.4f' % (rho, plin_reg), transform=ax.transAxes)
+    ax.text(ppos[0], ppos[1],r'm=%.4f p=%.4f' % (rho, plin_reg), transform=ax.transAxes)
     format_spines(ax, which=['left', 'bottom'], position=('outward', 5))
     if len(xlabel) > 0:
         ax.set_xlabel(xlabel)
