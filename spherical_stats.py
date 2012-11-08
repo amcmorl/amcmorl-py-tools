@@ -1,13 +1,14 @@
 import numpy as np
 import coord_primitives
 import scipy.optimize as opt
-from vectors import rotate_by_angles, norm
+from amcmorl_py_tools.vecgeom import norm
+from amcmorl_py_tools.vecgeom.rotations import rotate_by_angles
 #from mayavi import mlab
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from warnings import warn
-from spherical import cart2pol, pol2cart
+from amcmorl_py_tools.vecgeom.coords import cart2pol, pol2cart
 
 from warnings import warn
 warn("This module is deprecated. Use vecgeom package instead.")
