@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import cos, sin
 
 def rotate_about_centre(v, c, th):
     '''returns vector v after rotation about centre c

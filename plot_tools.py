@@ -30,7 +30,52 @@ def fill_between(x, y1, y2=0, ax=None, **kwargs):
     ax.add_patch(p)
     return p
 
-def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5), **kwargs):
+def format_spines(ax, which=[], hidden_color='none',
+                  position=('outward', 5)):
+    '''
+    Convenience function for formatting spines of a plot.
+
+    Parameters
+    ----------
+    ax : matplotlib axis
+    which : list of strings
+      names of spines (defined by matplotlib axes object) to format
+    hidden_color : string
+      any matplotlib color specification
+    '''
+    for loc, spine in ax.spines.iteritems():
+        if loc in which:
+            spine.set_visible(True) # in case it was hidden previously
+            spine.set_position(position)
+        else:
+            if hidden_color != 'none':
+                spine.set_color(hidden_color)
+            else:
+                spine.set_visible(False)
+
+    if 'bottom' in which:
+        ax.xaxis.set_ticks_position('bottom')
+    elif ('top' in which) and not ('bottom' in which):
+        ax.xaxis.set_ticks_position('top')
+    else:
+        ax.xaxis.set_ticks_position('none')
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+
+    if 'left' in which:
+        ax.yaxis.set_ticks_position('left')
+    elif 'right' in which:
+        ax.yaxis.set_ticks_position('right')
+    else:
+        ax.yaxis.set_ticks_position('none')
+    if ('left' in which) or ('right' in which):
+        for label in ax.get_yticklabels():
+            label.set_visible(True)
+    else:
+        for label in ax.get_yticklabels():
+            label.set_visible(False)
+
+def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5)):
     # fit a line of best fit (but use P value from non-parametric correlation measure
     rho, pcor = stats.spearmanr(x, y)
     m, c, r, plin_reg, e = stats.linregress(x, y)
@@ -42,11 +87,11 @@ def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='',
         ax = fig.add_subplot(111)
     else:
         fig = ax.figure
-    ax.plot(x, y, 'ko', **kwargs)
+    ax.plot(x, y, 'ko', ms=8)
     ax.plot(lnx, lny, 'k-')
     #aspect = (np.abs(np.diff(ax.get_xlim())) / np.abs(np.diff(ax.get_ylim()))).item()
     #print np.degrees(np.arctan(m * aspect))
-    ax.text(ppos[0], ppos[1],r'm=%.4f p=%.4f' % (rho, plin_reg), transform=ax.transAxes)
+    ax.text(ppos[0], ppos[1],r'm=%.2f P=%.4f' % (rho, plin_reg), transform=ax.transAxes)
     format_spines(ax, which=['left', 'bottom'], position=('outward', 5))
     if len(xlabel) > 0:
         ax.set_xlabel(xlabel)
@@ -242,51 +287,6 @@ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
         format_spines(ax, which)
         axes.append(ax)
     return axes
-
-def format_spines(ax, which=[], hidden_color='none',
-                  position=('outward', 5)):
-    '''
-    Convenience function for formatting spines of a plot.
-
-    Parameters
-    ----------
-    ax : matplotlib axis
-    which : list of strings
-      names of spines (defined by matplotlib axes object) to format
-    hidden_color : string
-      any matplotlib color specification
-    '''
-    for loc, spine in ax.spines.iteritems():
-        if loc in which:
-            spine.set_visible(True) # in case it was hidden previously
-            spine.set_position(position)
-        else:
-            if hidden_color != 'none':
-                spine.set_color(hidden_color)
-            else:
-                spine.set_visible(False)
-
-    if 'bottom' in which:
-        ax.xaxis.set_ticks_position('bottom')
-    elif ('top' in which) and not ('bottom' in which):
-        ax.xaxis.set_ticks_position('top')
-    else:
-        ax.xaxis.set_ticks_position('none')
-        for label in ax.get_xticklabels():
-            label.set_visible(False)
-
-    if 'left' in which:
-        ax.yaxis.set_ticks_position('left')
-    elif 'right' in which:
-        ax.yaxis.set_ticks_position('right')
-    else:
-        ax.yaxis.set_ticks_position('none')
-    if ('left' in which) or ('right' in which):
-        for label in ax.get_yticklabels():
-            label.set_visible(True)
-    else:
-        for label in ax.get_yticklabels():
-            label.set_visible(False)
 
 def subplot_spec2margins(subplot_spec, fig, hgap=0., vgap=0.):
     bbox = subplot_spec.get_position(fig)
