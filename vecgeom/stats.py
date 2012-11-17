@@ -228,11 +228,10 @@ def vmf_rvs(mu, k, n_pts=1):
     R_0 = R[...,0]
     R_1 = R[...,1]
     l = np.exp(-2 * k)
-    colat = 2 * np.arcsin(np.sqrt(-np.log(R_0 * (1 - l) + l) / (2 * k)))
+    colat  = 2 * np.arcsin(np.sqrt(-np.log(R_0 * (1 - l) + l) / (2 * k)))
     longit = 2 * np.pi * R_1
     
-    pts = pol2cart(colat, longit)
-    #print mean_dir(pts.T)
+    pts = pol2cart(np.vstack([colat, longit]), axis=0)
     alpha, beta = cart2pol(mu)
     return rotate_by_angles(pts, alpha, beta).T
 

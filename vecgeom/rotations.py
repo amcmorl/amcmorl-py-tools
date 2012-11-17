@@ -35,10 +35,10 @@ def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=False):
 
     Parameters
     ----------
-    vector : array_like, shape (3,)
-      axial components of vector
+    vector : array_like, shape (3,) or (3,n)
+      axial components of vector or `n` vectors
     theta : scalar
-      angle of rotation to z axis
+      angle of rotation to z axis, around y axis (i.e. in x-z plane)
     phi : scalar
       angle of rotation in x-y plane, CCW from x axis
     reverse_order : bool
@@ -46,8 +46,8 @@ def rotate_by_angles(vector, theta, phi, reverse_order=False, fixlen=False):
 
     Returns
     -------
-    rotated vector : array_like, shape (3,)
-      axial components of rotated vector
+    rotated vector : array_like, shape (3,) or (3,n)
+      axial components of rotated vector(s)
 
     Notes
     -----
