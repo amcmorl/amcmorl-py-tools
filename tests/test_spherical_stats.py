@@ -1,29 +1,31 @@
 from numpy.testing import *
 import numpy as np
-from spherical_stats import *
+from amcmorl_py_tools.vecgeom.stats import uniform_rvs_cart, vmf_rvs, \
+    mean_dir, estimate_kappa
+from amcmorl_py_tools.vecgeom.coords import pol2cart, cart2pol
 
 def test_uniform_rvs_cart():
-    vs = sstats.uniform_rvs_cart(2)
+    vs = uniform_rvs_cart(2)
     assert_equal(vs.shape, [2,3])
     assert_(np.max(vs) < 1.)
     assert_(np.min(vs) > -1.)
 
-def test_convert_polar_to_cartesian():
+def test_pol2cart():
     theta = np.pi/3.
     phi = np.pi/3.
     x = 1/2. * np.sqrt(3/4.)
     y = 3/4.
     z = 1/2.
-    res = convert_polar_to_cartesian(theta, phi)
+    res = pol2cart(np.array([theta, phi]))
     assert_almost_equal(np.array((x,y,z)), res)
 
-def test_convert_cartesian_to_polar():
+def test_cart2pol():
     theta = np.pi/3.
     phi = np.pi/3.
     x = 1/2. * np.sqrt(3/4.)
     y = 3/4.
     z = 1/2.
-    res = convert_cartesian_to_polar(np.array((x,y,z)))
+    res = cart2pol(np.array((x,y,z)))
     assert_almost_equal(np.array((theta, phi)), np.array(res))
 
 def test_coordinate_conversions():
@@ -31,8 +33,8 @@ def test_coordinate_conversions():
     for i in xrange(n_tests):
         theta = np.random.uniform(low = 0., high = np.pi)
         phi = np.random.uniform(low = 0., high = 2 * np.pi)
-        cart = convert_polar_to_cartesian(theta, phi)
-        theta_prime, phi_prime = convert_cartesian_to_polar(cart)
+        cart = pol2cart(np.array([theta, phi]))
+        theta_prime, phi_prime = cart2pol(cart)
         assert_almost_equal(np.array((theta, phi % (2 * np.pi))),
                             np.array((theta_prime, phi_prime % (2 * np.pi))))
 
@@ -41,12 +43,12 @@ def random_pars(mu=None, kappa=None, verbose=False):
         theta = np.random.uniform(low = -np.pi/2., high = np.pi/2.)
         phi = np.random.uniform(low = -np.pi, high = np.pi)
         if verbose: print "theta = %.3f, phi = %.3f" % (theta, phi)
-        mu = convert_polar_to_cartesian(theta, phi)
+        mu = pol2cart(np.array([theta, phi]))
     if kappa == None:
         kappa = np.random.uniform(low=0., high=5.)
     return mu, kappa
 
-def test_VMF_RVS():
+def test_vmf_rvs():
     mu, kappa = random_pars()
     n_pts = int(1e4)
     tolerance = 0.1

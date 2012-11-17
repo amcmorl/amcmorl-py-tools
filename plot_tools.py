@@ -4,6 +4,7 @@ import matplotlib as mpl
 from mpl_toolkits.axes_grid import AxesGrid
 import warnings
 from scipy import stats
+from matplotlib.colors import ColorConverter
 
 def no_clip(ax): 
      "Turn off all clipping in axes ax; call immediately before drawing" 
@@ -74,6 +75,9 @@ def format_spines(ax, which=[], hidden_color='none',
     else:
         for label in ax.get_yticklabels():
             label.set_visible(False)
+
+lighten = lambda x : tuple([c + (1 - c) * 0.5 \
+    for c in ColorConverter().to_rgb(x)])
 
 def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5)):
     # fit a line of best fit (but use P value from non-parametric correlation measure
