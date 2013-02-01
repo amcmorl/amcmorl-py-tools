@@ -6,6 +6,10 @@ import warnings
 from scipy import stats
 from matplotlib.colors import ColorConverter
 
+import scipy.signal as signal
+from scipy.stats import norm
+import matplotlib.font_manager as fm
+
 def no_clip(ax): 
      "Turn off all clipping in axes ax; call immediately before drawing" 
      ax.set_clip_on(False) 
@@ -78,6 +82,80 @@ def format_spines(ax, which=[], hidden_color='none',
 
 lighten = lambda x : tuple([c + (1 - c) * 0.5 \
     for c in ColorConverter().to_rgb(x)])
+    
+###############################################################################
+# make_xkcd, from https://gist.github.com/3874297
+###############################################################################
+
+def rand_func(data):
+    """ multiply data by low-pas filtered random values 
+        data - input data array
+    """
+    length = np.size(data)
+    coeffs = norm.rvs(loc=0, scale=1e-2, size=length) # random values
+    b = signal.firwin(2., min(1, 9./length))
+    # use low pass filter to smooth variations
+    response = signal.lfilter(b, 1, coeffs) + 1 
+    return data * response
+
+def make_xkcd(ax, x_label='', y_label=''):
+    """ make an xkcd style plot
+        ax - axis element
+        x_label, y_label - optional text for x and y axis
+    """
+
+    # add randomness to x and y of plotted lines
+    pltlist = ax.get_lines()
+    for p in pltlist:
+        x = p.get_xdata()
+        y = p.get_ydata()
+        x = rand_func(x)
+        y = rand_func(y)
+        p.set_xdata(x)
+        p.set_ydata(y)
+
+    ax.axison = False
+    # get boundaries for x and y axis
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    xsize = xmax - xmin
+    ysize = ymax - ymin
+    # Increase figure size to fit new custom axes
+    border = 10. # border size
+    xmin  -= xsize / border
+    xmax  += xsize / border
+    ymin  -= ysize / border
+    ymax  += ysize / border
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+    
+    # Poor man's x-axis
+    xlen  = np.size(x)
+    xaxis = np.linspace(xmin, xmax - xsize / border, xlen)
+    yaxis = rand_func([ysize] * xlen) - ysize + ymin + ysize / border
+    ax.plot(xaxis, yaxis, 'k', lw=2)
+    ax.arrow(xaxis[-1], yaxis[-1], 1e-6, 0, fc='k', lw=2, \
+        head_width=ysize / 30, head_length=xsize / border)
+
+    # Poor man's y-axis
+    xaxis = rand_func([xsize] * xlen) - xsize + xmin + xsize / border
+    yaxis = np.linspace(ymin, ymax - ysize / border, xlen) 
+    ax.plot(xaxis, yaxis, 'k', lw=2)
+    ax.arrow(xaxis[-1], yaxis[-1], 0, 1e-6, fc='k', lw=2, \
+        head_width=xsize / 40, head_length=ysize / border);
+    
+    # Add axis description text
+    # The font is available here: http://antiyawn.com/uploads/Humor-Sans.ttf
+    prop = fm.FontProperties(fname='/home/amcmorl/lib/Humor-Sans.ttf')
+    a = ax.text(xmax, ymin, x_label, fontproperties=prop, size=14,\
+        rotation=2, horizontalalignment='right')
+    ax.text(xmin, ymax, y_label, fontproperties=prop, size=14, \
+        rotation=88, verticalalignment='top');
+
+###############################################################################
+# less used stuff below this line 
+###############################################################################
+
 
 def plot_scatter_with_lst_sq_line(x, y, ax=None, xlabel='', ylabel='', title='', ppos=(0.5,0.5)):
     # fit a line of best fit (but use P value from non-parametric correlation measure
@@ -373,3 +451,4 @@ def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2, shar
     cax.axis["right"].toggle(ticks=True, ticklabels=True, label=True)
     #cax.set_ylabel("")
     return grid
+
