@@ -203,47 +203,47 @@ def plot_scatter(x, y, ax=None, xlabel='', ylabel='', title='', **kwargs):
         ax.set_title(title)
     return ax
 
-class Margins:
-    def __init__(self, left=0, bottom=0, right=0, top=0, hgap=0, vgap=0):
-        warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
-        self.left = left
-        self.bottom = bottom
-        self.right = right
-        self.top = top
-        self.hgap = hgap
-        self.vgap = vgap
-
-    def __str__(self):
-        str = "Left: %s\n" % (self.left)
-        str += "Bottom: %s\n" % (self.bottom)
-        str += "Right: %s\n" % (self.right)
-        str += "Top: %s\n" % (self.top)
-        str += "Horizontal gap: %s\n" % (self.hgap)
-        str += "Vertical gap: %s" % (self.vgap)
-        return str 
-
-    def get_rect(self):
-        return [self.left, self.bottom,
-                1 - self.right - self.left, 1 - self.top - self.bottom]
-
-    def set_from_rect(self, rect, total_width=1, total_height=1):
-        self.left = rect[0]
-        self.bottom = rect[1]
-        width = rect[2]
-        height = rect[3]
-        self.right = total_width - width - self.left
-        self.top = total_height - height - self.bottom
-
-def make_margin_from_rect(rect, hgap=0, vgap=0,
-                          total_width=1, total_height=1):
-    warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
-    left = rect[0]
-    bottom = rect[1]
-    width = rect[2]
-    height = rect[3]
-    right = total_width - width - left
-    top = total_height - height - bottom
-    return Margins(left, bottom, right, top, hgap, vgap)
+#~ class Margins:
+    #~ def __init__(self, left=0, bottom=0, right=0, top=0, hgap=0, vgap=0):
+        #~ warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
+        #~ self.left = left
+        #~ self.bottom = bottom
+        #~ self.right = right
+        #~ self.top = top
+        #~ self.hgap = hgap
+        #~ self.vgap = vgap
+#~ 
+    #~ def __str__(self):
+        #~ str = "Left: %s\n" % (self.left)
+        #~ str += "Bottom: %s\n" % (self.bottom)
+        #~ str += "Right: %s\n" % (self.right)
+        #~ str += "Top: %s\n" % (self.top)
+        #~ str += "Horizontal gap: %s\n" % (self.hgap)
+        #~ str += "Vertical gap: %s" % (self.vgap)
+        #~ return str 
+#~ 
+    #~ def get_rect(self):
+        #~ return [self.left, self.bottom,
+                #~ 1 - self.right - self.left, 1 - self.top - self.bottom]
+#~ 
+    #~ def set_from_rect(self, rect, total_width=1, total_height=1):
+        #~ self.left = rect[0]
+        #~ self.bottom = rect[1]
+        #~ width = rect[2]
+        #~ height = rect[3]
+        #~ self.right = total_width - width - self.left
+        #~ self.top = total_height - height - self.bottom
+#~ 
+#~ def make_margin_from_rect(rect, hgap=0, vgap=0,
+                          #~ total_width=1, total_height=1):
+    #~ warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
+    #~ left = rect[0]
+    #~ bottom = rect[1]
+    #~ width = rect[2]
+    #~ height = rect[3]
+    #~ right = total_width - width - left
+    #~ top = total_height - height - bottom
+    #~ return Margins(left, bottom, right, top, hgap, vgap)
 
 def make_enough_rows(total, cols):
     rows = int(total / cols)

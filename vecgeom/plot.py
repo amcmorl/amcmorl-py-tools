@@ -1,3 +1,5 @@
+import numpy as np
+
 def plot_pts(pts=None, mu=None):
     p3d = mlab.pipeline
 
