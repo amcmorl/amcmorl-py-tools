@@ -9,7 +9,7 @@ import numpy as np
 from numpy import (cos, sin, arctan2, arccos, arcsin, array, dot, \
     square, sqrt, nonzero, zeros, sum, nan_to_num, asarray, \
     apply_along_axis)
-from . import unit_vector
+from . import unitvec
 
 #==============================================================================
 # Axial rotation matrices
