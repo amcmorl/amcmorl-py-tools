@@ -252,12 +252,12 @@ def make_enough_rows(total, cols):
         rows += 1
     return rows
 
-def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), direction='row'):
-    '''Calculate rect values for axis.
-    '''
-    i_axs = np.array(i_ax)
-    axs = get_ax_rect(i_axs, ncols, nrows, margin=margin, direction=direction)
-    return axs[0]
+#~ def get_ax_rect(i_ax, ncols, nrows, margin=Margins(), direction='row'):
+    #~ '''Calculate rect values for axis.
+    #~ '''
+    #~ i_axs = np.array(i_ax)
+    #~ axs = get_ax_rect(i_axs, ncols, nrows, margin=margin, direction=direction)
+    #~ return axs[0]
 
 def get_col_row(i, ncols, nrows, direction):
     warnings.warn("Use np.unravel_index instead.", DeprecationWarning)
@@ -269,128 +269,128 @@ def get_col_row(i, ncols, nrows, direction):
         nrow = i % nrows
     return ncol, nrow
 
-def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), direction='row'):
-    '''Calculate rect values for several axes.
-    '''        
-    i_axs = np.asarray(i_axs)
-    assert direction in ['row', 'col']
-    #print "m.left", margin.left, "m.right", margin.right
-    w = (1 - (margin.left + margin.right + \
-                  (ncols - 1) * margin.hgap)) / float(ncols)
-    h = (1 - (margin.bottom + margin.top + \
-                  (nrows - 1) * margin.vgap)) / float(nrows)
-    #print "W", w, "H", h, "ncols", ncols
-    ncol, nrow = get_col_row(i_axs, ncols, nrows, direction)
-    l = margin.left + ncol * (w + margin.hgap)
-    b = margin.bottom + (nrows - nrow - 1) * (h + margin.vgap)
-    ax_rects = np.vstack((l, b, np.ones_like(l) * w, np.ones_like(b) * h))
-    return ax_rects.T
+#~ def get_ax_rects(i_axs, ncols, nrows, margin=Margins(), direction='row'):
+    #~ '''Calculate rect values for several axes.
+    #~ '''        
+    #~ i_axs = np.asarray(i_axs)
+    #~ assert direction in ['row', 'col']
+    #~ #print "m.left", margin.left, "m.right", margin.right
+    #~ w = (1 - (margin.left + margin.right + \
+                  #~ (ncols - 1) * margin.hgap)) / float(ncols)
+    #~ h = (1 - (margin.bottom + margin.top + \
+                  #~ (nrows - 1) * margin.vgap)) / float(nrows)
+    #~ #print "W", w, "H", h, "ncols", ncols
+    #~ ncol, nrow = get_col_row(i_axs, ncols, nrows, direction)
+    #~ l = margin.left + ncol * (w + margin.hgap)
+    #~ b = margin.bottom + (nrows - nrow - 1) * (h + margin.vgap)
+    #~ ax_rects = np.vstack((l, b, np.ones_like(l) * w, np.ones_like(b) * h))
+    #~ return ax_rects.T
 
-def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
-                     direction='row', sharex='none', sharey='none',
-                     yspines='left', xspines='bottom'):
-    '''Create a grid of axes suitable for plots.
-
-    Parameters
-    ----------
-    n_axes, ncols : int
-      number of axes and columns
-    margin : Margins instance
-    fig : mpl figure
-      figure to use; if None, creates a new figure
-    direction : {'row', 'col'}
-      numbering direction for plots
-    sharex : {'col', 'row', 'all', 'none'}
-      how, if at all, to share x axes
-    yspines : {'left', 'all'}
-      where to draw y spines, relative to grid, 'all' means on all columns
-    xspines : {'bottom', 'all'}
-      where to draw x spines, relative to grid, 'all' mean on all rows
-      
-    Returns
-    -------
-    axes : list of mpl Axes objects
-    '''
-    warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
-    assert(direction in ['row', 'col'])
-    assert(sharex in ['col', 'row', 'all', 'none'])
-    assert(yspines in ['left', 'all', 'none'])
-    assert(xspines in ['bottom', 'all'])
-    
-    nrows = n_axes / ncols if n_axes % ncols == 0 \
-        else n_axes / ncols + 1
-    axes = []
-    i_axs = np.arange(n_axes)
-    axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin,
-                           direction=direction)
-    if fig == None:
-        fig = plt.figure()
-    col_leader = None
-    row_leader = None
-    for i, axrect in enumerate(axrects):
-        ncol, nrow = get_col_row(i, ncols, nrows, direction)
-        if sharex == 'col':
-            if (nrow == 0) and (ncol > 0):
-                # reset at the top of new columns
-                col_leader = None
-        if sharey == 'row':
-            if (ncol == 0) and (nrow > 0):
-                # reset at the beginning of new rows
-                row_leader = None
-        ax = fig.add_axes(axrect, sharex=col_leader, sharey=row_leader)
-
-        # axis sharing
-        if sharex == 'col':
-            if nrow == 0:
-                col_leader = ax
-        elif sharex == 'all':
-            if (nrow == 0) and (ncol == 0):
-                col_leader = ax
-        
-        if sharey == 'row':
-            if ncol == 0:
-                row_leader = ax
-        elif sharey == 'all':
-            if (ncol == 0) and (nrow == 0):
-                row_leader = ax
-                
-        # spines
-        which = []
-        if yspines == 'left':
-            if ncol == 0:
-                which.append('left')
-        elif yspines == 'all':
-            which.append('left')
-        if xspines == 'all':
-            which.append('bottom')
-        elif xspines == 'bottom':
-            if nrow == (nrows - 1):
-                which.append('bottom')
-        format_spines(ax, which)
-        axes.append(ax)
-    return axes
-
-def subplot_spec2margins(subplot_spec, fig, hgap=0., vgap=0.):
-    bbox = subplot_spec.get_position(fig)
-    left, bottom, width, height = bbox.bounds
-    right = 1 - left - width
-    top = 1 - bottom - height
-    #print left, bottom, right, top
-    return Margins(left, bottom, right, top, hgap, vgap)
-
-dashes = [[20, 2],
-          [2, 2],
-          [20, 2, 2, 2],
-          [20, 2, 20, 2],
-          [20, 2, 2, 2, 2, 2],
-          [20, 2, 20, 2, 2, 2],
-          [8, 2, 2, 2, 2, 2],
-          [8, 2, 2, 2]]
-
-colours = [[0., 0., 0.],
-           [0., 0., 0.],
-           [0.5, 0.5, 0.5],
-           [0.5, 0.5, 0.5]]
+#~ def create_plot_grid(n_axes, ncols=1, margin=Margins(), fig=None,
+                     #~ direction='row', sharex='none', sharey='none',
+                     #~ yspines='left', xspines='bottom'):
+    #~ '''Create a grid of axes suitable for plots.
+#~ 
+    #~ Parameters
+    #~ ----------
+    #~ n_axes, ncols : int
+      #~ number of axes and columns
+    #~ margin : Margins instance
+    #~ fig : mpl figure
+      #~ figure to use; if None, creates a new figure
+    #~ direction : {'row', 'col'}
+      #~ numbering direction for plots
+    #~ sharex : {'col', 'row', 'all', 'none'}
+      #~ how, if at all, to share x axes
+    #~ yspines : {'left', 'all'}
+      #~ where to draw y spines, relative to grid, 'all' means on all columns
+    #~ xspines : {'bottom', 'all'}
+      #~ where to draw x spines, relative to grid, 'all' mean on all rows
+      #~ 
+    #~ Returns
+    #~ -------
+    #~ axes : list of mpl Axes objects
+    #~ '''
+    #~ warnings.warn("Use matplotlib.gridspec.GridSpec instead.", DeprecationWarning)
+    #~ assert(direction in ['row', 'col'])
+    #~ assert(sharex in ['col', 'row', 'all', 'none'])
+    #~ assert(yspines in ['left', 'all', 'none'])
+    #~ assert(xspines in ['bottom', 'all'])
+    #~ 
+    #~ nrows = n_axes / ncols if n_axes % ncols == 0 \
+        #~ else n_axes / ncols + 1
+    #~ axes = []
+    #~ i_axs = np.arange(n_axes)
+    #~ axrects = get_ax_rects(i_axs, ncols, nrows, margin=margin,
+                           #~ direction=direction)
+    #~ if fig == None:
+        #~ fig = plt.figure()
+    #~ col_leader = None
+    #~ row_leader = None
+    #~ for i, axrect in enumerate(axrects):
+        #~ ncol, nrow = get_col_row(i, ncols, nrows, direction)
+        #~ if sharex == 'col':
+            #~ if (nrow == 0) and (ncol > 0):
+                #~ # reset at the top of new columns
+                #~ col_leader = None
+        #~ if sharey == 'row':
+            #~ if (ncol == 0) and (nrow > 0):
+                #~ # reset at the beginning of new rows
+                #~ row_leader = None
+        #~ ax = fig.add_axes(axrect, sharex=col_leader, sharey=row_leader)
+#~ 
+        #~ # axis sharing
+        #~ if sharex == 'col':
+            #~ if nrow == 0:
+                #~ col_leader = ax
+        #~ elif sharex == 'all':
+            #~ if (nrow == 0) and (ncol == 0):
+                #~ col_leader = ax
+        #~ 
+        #~ if sharey == 'row':
+            #~ if ncol == 0:
+                #~ row_leader = ax
+        #~ elif sharey == 'all':
+            #~ if (ncol == 0) and (nrow == 0):
+                #~ row_leader = ax
+                #~ 
+        #~ # spines
+        #~ which = []
+        #~ if yspines == 'left':
+            #~ if ncol == 0:
+                #~ which.append('left')
+        #~ elif yspines == 'all':
+            #~ which.append('left')
+        #~ if xspines == 'all':
+            #~ which.append('bottom')
+        #~ elif xspines == 'bottom':
+            #~ if nrow == (nrows - 1):
+                #~ which.append('bottom')
+        #~ format_spines(ax, which)
+        #~ axes.append(ax)
+    #~ return axes
+#~ 
+#~ def subplot_spec2margins(subplot_spec, fig, hgap=0., vgap=0.):
+    #~ bbox = subplot_spec.get_position(fig)
+    #~ left, bottom, width, height = bbox.bounds
+    #~ right = 1 - left - width
+    #~ top = 1 - bottom - height
+    #~ #print left, bottom, right, top
+    #~ return Margins(left, bottom, right, top, hgap, vgap)
+#~ 
+#~ dashes = [[20, 2],
+          #~ [2, 2],
+          #~ [20, 2, 2, 2],
+          #~ [20, 2, 20, 2],
+          #~ [20, 2, 2, 2, 2, 2],
+          #~ [20, 2, 20, 2, 2, 2],
+          #~ [8, 2, 2, 2, 2, 2],
+          #~ [8, 2, 2, 2]]
+#~ 
+#~ colours = [[0., 0., 0.],
+           #~ [0., 0., 0.],
+           #~ [0.5, 0.5, 0.5],
+           #~ [0.5, 0.5, 0.5]]
 
 class LineCycler():
     def __init__(self):
@@ -417,7 +417,8 @@ class FigNumer():
         self.next_num += 1
         return next_num
 
-def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2, share_axes=True):
+def plot_panels(array, fig=None, nrows=1, panel_labels=None, extra_col=0.2, \
+    share_axes=True):
     '''
     Plot an array as a series of image panels.
     
