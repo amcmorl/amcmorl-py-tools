@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import cos, sin, array, dot
+#from numpy import cos, sin, array, dot
 
 def vec2str(vec, dp=2):
     vec = np.asarray(vec)
@@ -48,6 +48,13 @@ def _unitvec(vec):
 
 def unitvec(arr, axis=-1):
     return np.apply_along_axis(_unitvec, axis, arr)
+
+def unitvec_f2d(a):
+    '''returns the unit length versions of vectors along the last dimension of
+    `arr`.
+    '''
+    nr = np.sqrt(np.sum(a**2, axis=-1))
+    return a / nr[...,None]
     
 def cross_matrix(v):
     '''

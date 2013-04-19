@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 from matplotlib.projections import register_projection, PolarAxes
 from matplotlib.transforms import Affine2D, Affine2DBase, Bbox, \
     BboxTransformTo, IdentityTransform, Transform, TransformWrapper
@@ -30,7 +31,7 @@ class SplitLambertTransform(Transform):
     def _fix_phi(self, phi):
         return phi % (2 * np.pi)
     
-    def transform(self, thph):
+    def transform_non_affine(self, thph):
         """
         Override the transform method to implement the custom transform.
         
@@ -73,7 +74,7 @@ class SplitLambertTransform(Transform):
         # differently-sized array, any transform that requires
         # changing the length of the data array must happen within
         # ``transform_path``.
-    def transform_path(self, path):
+    def transform_path_non_affine(self, path):
         ipath = self.interpolate_path(path) # interpolate in data-space
         
         nvert = self.transform(ipath.vertices) # transform interpolated pts
@@ -83,6 +84,8 @@ class SplitLambertTransform(Transform):
         ncode[flip] = Path.MOVETO
         npath = Path(nvert, ncode)
         return npath
+    transform_path_non_affine.__doc__ = \
+        Transform.transform_path_non_affine.__doc__
 
     def interpolate_path(self, path):
         """
@@ -102,7 +105,10 @@ class SplitLambertTransform(Transform):
             new_codes = None
         return Path(vertices, new_codes)
 
-    transform_path_non_affine = transform_path
+    if matplotlib.__version__ < '1.2':
+        transform = transform_non_affine
+        transform_path = transform_path_non_affine
+        transform_path.__doc__ = Transform.transform_path.__doc__
 
     def inverted(self):
         return InvertedSplitLambertTransform()
@@ -116,7 +122,8 @@ def circular_interpolation(a, steps):
     if steps == 1:
         return a
 
-    steps = np.floor(steps)
+    steps = np.floor(steps).astype(int)
+    
     new_length = ((len(a) - 1) * steps) + 1
     new_shape = list(a.shape)
     new_shape[0] = new_length
@@ -146,7 +153,7 @@ class InvertedSplitLambertTransform(Transform):
     output_dims = 2
     is_separable = False
     
-    def transform(self, xy):
+    def transform_non_affine(self, xy):
         x = xy[:, 0:1]
         y = xy[:, 1:2]
         
@@ -174,26 +181,25 @@ class InvertedSplitLambertTransform(Transform):
         phi[top_hemi] = (np.pi - phi[top_hemi]) % (2 * np.pi)
             
         return np.concatenate((theta, phi), 1)
-    transform.__doc__ = Transform.transform.__doc__
+    transform_non_affine.__doc__ = Transform.transform_non_affine.__doc__
+
+    if matplotlib.__version__ < '1.2':
+        transform = transform_non_affine
 
     def inverted(self):
         # The inverse of the inverse is the original transform... ;)
         return SplitLambertTransform()
     inverted.__doc__ = Transform.inverted.__doc__
-
     
 def test_split_lambert_transform():
-    slt = SplitLambertTransform()
-    tp = np.array([[0, 0],
-                   [np.pi, 0],
+    slt = SplitLambertTransform(100.)
+    tp = np.array([[np.pi, 0],
                    [np.pi/2., 0.],
                    [np.pi/2., np.pi]])
-    answers = np.array([[-0.25, 0],
-                        [0.25, 0],
+    answers = np.array([[0.25, 0],
                         [0.5, 0],
                         [0, 0]])
-    assert(np.allclose(slt.transform(tp), answers))
+    np.testing.assert_array_almost_equal(slt.transform(tp), answers)
     islt = slt.inverted()
-    print "********"
-    assert(np.allclose(islt.transform(answers), tp))
+    np.testing.assert_array_almost_equal(islt.transform(answers), tp)
     

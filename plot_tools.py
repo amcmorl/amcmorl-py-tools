@@ -82,7 +82,18 @@ def format_spines(ax, which=[], hidden_color='none',
 
 lighten = lambda x : tuple([c + (1 - c) * 0.5 \
     for c in ColorConverter().to_rgb(x)])
-    
+
+darken = lambda x : tuple([c * 0.5 \
+    for c in ColorConverter().to_rgb(x)])
+
+def label_subplot_spec(subplot_spec, fig, text, x=0, **kwargs):
+    x = x
+    y0 = subplot_spec.get_position(fig).y0
+    y1 = subplot_spec.get_position(fig).y1
+    y = (y0 + y1) / 2.
+    kwargs.setdefault('rotation', 90)
+    fig.text(x, y, text, **kwargs)
+
 ###############################################################################
 # make_xkcd, from https://gist.github.com/3874297
 ###############################################################################
@@ -243,7 +254,7 @@ def plot_scatter(x, y, ax=None, xlabel='', ylabel='', title='', **kwargs):
     #~ height = rect[3]
     #~ right = total_width - width - left
     #~ top = total_height - height - bottom
-    #~ return Margins(left, bottom, right, top, hgap, vgap)
+   #~ return Margins(left, bottom, right, top, hgap, vgap)
 
 def make_enough_rows(total, cols):
     rows = int(total / cols)

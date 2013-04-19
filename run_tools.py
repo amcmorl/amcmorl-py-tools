@@ -92,3 +92,32 @@ def shc(s, c):
     if c not in col.keys():
         raise ValueError("`c` must be one of %s" % (str(col.keys())))
     return "\033[1;%2dm%s\033[1;m" % (col[c], s)
+
+
+#!/usr/bin/env python
+# encoding: utf-8
+
+import sys
+
+def switch_on_call_tracing(base):
+    def trace_calls(frame, event, arg):
+        if event != 'call':
+            return
+        co = frame.f_code
+        func_name = co.co_name
+        if func_name == 'write':
+            # Ignore write() calls from print statements
+            return
+        func_line_no = frame.f_lineno
+        func_filename = co.co_filename
+        if not base in func_filename:
+            return
+        caller = frame.f_back
+        caller_line_no = caller.f_lineno
+        caller_filename = caller.f_code.co_filename
+        print '%20s:%2s of %30s from %30s:%2s' % \
+            (func_name, func_line_no, func_filename,
+             caller_filename, caller_line_no)
+        return
+
+    sys.settrace(trace_calls)
