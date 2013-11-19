@@ -1,7 +1,7 @@
 import numpy as np
-#from numpy import cos, sin, array, dot
+from numpy import cos, sin #, array, dot
 #from numpy import arctan2, sqrt
-from . import norm
+from . import norm, tensor_product, cross_matrix, unitvec
 
 def angle_between(a, b):
     '''returns the angle (in rads) between 2 vectors'''
@@ -14,6 +14,51 @@ def pt_nearest(pt, offs, dir):
     '''returns point ''new'' on line in direction ''dir'' through ''offs''
     nearest to point ''pt'' '''
     return offs + np.cross(dir, pt - offs) * dir
+
+def axis_angle2mat(axis, angle):
+    '''
+    Construct rotation matrix from axis of rotation and angle.
+    
+    Parameters
+    ----------
+    axis : array_like
+      vector of axis of rotation
+    angle : float
+      amount to rotate in radians
+    '''
+    axis = unitvec(axis)
+    if np.rank(axis) > 1:
+        raise ValueError('axis should be 1-d only')
+    nd = axis.shape[0]
+    xm = cross_matrix(axis)
+    tp = tensor_product(axis, axis)
+    c, s = cos(angle), sin(angle)
+    I = np.identity(nd)
+    return I * c + s * xm + (1 - c) * tp
+    
+def rotmat_between_two_vecs(u, v):
+    '''
+    Calculate the rotation matrix to transform from one vector `u`
+    to another 'v'.
+    
+    Parameters
+    ----------
+    u, v : array_like
+      1-d vectors
+      
+    Returns
+    -------
+    r : ndarray
+      rotation matrix
+    '''
+    u = unitvec(u)
+    v = unitvec(v)
+    # if vectors are parallel, return Indentity
+    if np.all(u == v):
+        return np.identity(u.shape[0])
+    axis = np.cross(u, v)
+    angle = np.arccos(np.dot(u,v))
+    return axis_angle2mat(axis, angle)
 
 #~ def Rx(theta):
     #~ '''
@@ -87,51 +132,6 @@ def pt_nearest(pt, offs, dir):
       #~ shape (3,3) rotation matrix
     #~ '''
     #~ return dot(dot(Rx(ypr[0]), Ry(ypr[1])), Rz(ypr[2]))
-
-#~ def axis_angle2mat(axis, angle):
-    #~ '''
-    #~ Construct rotation matrix from axis of rotation and angle.
-    #~ 
-    #~ Parameters
-    #~ ----------
-    #~ axis : array_like
-      #~ vector of axis of rotation
-    #~ angle : float
-      #~ amount to rotate in radians
-    #~ '''
-    #~ axis = unitvec(axis)
-    #~ if np.rank(axis) > 1:
-        #~ raise ValueError('axis should be 1-d only')
-    #~ nd = axis.shape[0]
-    #~ xm = cross_matrix(axis)
-    #~ tp = tensor_product(axis, axis)
-    #~ c, s = cos(angle), sin(angle)
-    #~ I = np.identity(nd)
-    #~ return I * c + s * xm + (1 - c) * tp
-    
-#~ def rotmat_between_two_vecs(u, v):
-    #~ '''
-    #~ Calculate the rotation matrix to transform from one vector `u`
-    #~ to another 'v'.
-    #~ 
-    #~ Parameters
-    #~ ----------
-    #~ u, v : array_like
-      #~ 1-d vectors
-      #~ 
-    #~ Returns
-    #~ -------
-    #~ r : ndarray
-      #~ rotation matrix
-    #~ '''
-    #~ u = unitvec(u)
-    #~ v = unitvec(v)
-    #~ # if vectors are parallel, return Indentity
-    #~ if np.all(u == v):
-        #~ return np.identity(u.shape[0])
-    #~ axis = np.cross(u, v)
-    #~ angle = np.arccos(np.dot(u,v))
-    #~ return axis_angle2mat(axis, angle)
 
 #~ def rm2ypr(rm):
     #~ '''
