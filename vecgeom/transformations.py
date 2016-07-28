@@ -321,6 +321,7 @@ def DCM2quat(DCM):
         shape (4,),  quaternion
     '''
     DCM = DCM.transpose()
+    DCM[np.isclose(DCM,0)] = 0
     quat = zeros(4)
     denom = array([0.5*sqrt(1+DCM[0,0]-DCM[1,1]-DCM[2,2]),
                    0.5*sqrt(1-DCM[0,0]+DCM[1,1]-DCM[2,2]),
@@ -334,10 +335,10 @@ def DCM2quat(DCM):
         quat[2] = (DCM[0,2]+DCM[2,0])/(4*quat[0])
         quat[3] = (DCM[1,2]-DCM[2,1])/(4*quat[0])
     elif denommaxind == 1:
-        quat[0] = denom[1]
-        quat[1] = (DCM[0,1]+DCM[1,0])/(4*quat[1])
+        quat[1] = denom[1]
+        quat[0] = (DCM[0,1]+DCM[1,0])/(4*quat[1])
         quat[2] = (DCM[1,2]+DCM[2,1])/(4*quat[1])
-        quat[3] = (DCM[2,0]-DCM[2,0])/(4*quat[1])
+        quat[3] = (DCM[2,0]-DCM[0,2])/(4*quat[1])
     elif denommaxind == 2:
         quat[2] = denom[2]
         quat[0] = (DCM[0,2]+DCM[2,0])/(4*quat[2])
